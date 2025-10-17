@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"strconv"
 	"strings"
@@ -40,7 +41,18 @@ func InitCtx(targetURL *string, ua string) (string, error) {
 
 	if err := chromedp.Run(ctx,
 		chromedp.Navigate(*targetURL),
+		chromedp.Sleep(time.Duration(500+rand.Intn(1500))*time.Millisecond),
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			_ = network.Enable().Do(ctx)
+			chromedp.EvaluateAsDevTools(`() => { try { Object.defineProperty(navigator, 'webdriver', {get: () => undefined}); } catch(e){} }`, nil).Do(ctx)
+			chromedp.EvaluateAsDevTools(`() => { try { Object.defineProperty(navigator, 'plugins', {get: () => [1,2,3,4]}); Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']}); } catch(e){} }`, nil).Do(ctx)
+			chromedp.EvaluateAsDevTools(`() => { try { window.chrome = window.chrome || {}; window.chrome.webstore = {}; } catch(e){} }`, nil).Do(ctx)
+			return nil
+		}),
 		chromedp.Sleep(2*time.Second),
+		chromedp.Evaluate(`window.scrollTo(0, document.body.scrollHeight * 0.5);`, nil),
+		chromedp.Sleep(1*time.Second),
+		chromedp.OuterHTML("html", &body, chromedp.ByQuery),
 		loadAndCaptureAction(&body),
 	); err != nil {
 		utils.Logger.Errorf("chromedp run error: %v", err)
@@ -69,22 +81,26 @@ func GetMaxAnnID(body string) int {
 	}
 
 	doc.Find("table tbody tr").Each(func(i int, s *goquery.Selection) {
-		var link string
-		if a := s.Find("a[href]").First(); a.Length() > 0 {
-			if h, ok := a.Attr("href"); ok {
-				link = h
+		s.Find("a[href]").Each(func(_ int, a *goquery.Selection) {
+			href, exists := a.Attr("href")
+			if !exists || !strings.Contains(href, "ann_id") {
+				return
 			}
-		}
-		if link == "" {
-			return
-		}
-		if u, err := url.Parse(link); err == nil {
+
+			u, err := url.Parse(href)
+			if err != nil {
+				return
+			}
+
 			q := u.Query()
-			if idInt, err := strconv.Atoi(q.Get("ann_id")); err == nil && idInt > maxID {
-				maxID = idInt
+			if idStr := q.Get("ann_id"); idStr != "" {
+				if idInt, err := strconv.Atoi(idStr); err == nil && idInt > maxID {
+					maxID = idInt
+				}
 			}
-		}
+		})
 	})
+
 	return maxID
 }
 
