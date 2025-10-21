@@ -42,3 +42,8 @@ func Truncate(s string, maxLen int) string {
 func IsEmpty(s string) bool {
 	return strings.TrimSpace(s) == ""
 }
+
+// htmlUnescape replaces HTML encoded characters like &amp; with &
+func HtmlUnescape(s string) string {
+	return strings.ReplaceAll(s, "&amp;", "&")
+}

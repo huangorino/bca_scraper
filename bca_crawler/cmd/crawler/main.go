@@ -45,9 +45,26 @@ func main() {
 
 	log.Infof("✅ Parsed announcements. Max ann_id: %d", maxID)
 
-	for i := 3599870; i <= maxID; i++ {
+	startID := 1
+
+	// Fetch existing announcements to determine starting ID
+	data, err := db.GetMaxAnnID(database)
+	if err != nil {
+		log.Infof("❌ Failed to fetch max ann_id from DB: %v", err)
+	} else {
+		if data >= maxID {
+			log.Info("⚠️ Database is already up-to-date. No new announcements to scrape.")
+			return
+		}
+
+		startID = data + 1
+	}
+
+	log.Infof("✅ Starting from ann_id: %d", startID)
+
+	for i := 2954755; i <= maxID; i++ {
 		annID := strconv.Itoa(i)
-		url := cfg.DetailURL + annID
+		url := cfg.DetailDomain + cfg.DetailURL + annID
 		log.Infof("🔎 Processing announcement ID: %s", annID)
 
 		var html string
@@ -71,7 +88,7 @@ func main() {
 		}
 
 		a := &models.Announcement{
-			AnnID:   annID,
+			AnnID:   i,
 			Link:    url,
 			Content: html,
 		}

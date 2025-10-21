@@ -10,11 +10,12 @@ import (
 
 // Config holds all runtime configuration
 type Config struct {
-	StartURL  string
-	DetailURL string
-	DBPath    string
-	UserAgent string
-	LogLevel  string
+	StartURL     string
+	DetailDomain string
+	DetailURL    string
+	DBPath       string
+	UserAgent    string
+	LogLevel     string
 }
 
 // Load reads .env and CLI flags, sets defaults, and returns a Config struct
@@ -25,6 +26,7 @@ func LoadCfg() (*Config, error) {
 	cfg := &Config{}
 
 	flag.StringVar(&cfg.StartURL, "start-url", os.Getenv("START_URL"), "Base Bursa announcements URL")
+	flag.StringVar(&cfg.DetailDomain, "detail-domain", os.Getenv("DETAIL_DOMAIN"), "Announcement detail URL prefix")
 	flag.StringVar(&cfg.DetailURL, "detail-url", os.Getenv("DETAIL_URL"), "Announcement detail URL prefix")
 	flag.StringVar(&cfg.DBPath, "db-path", os.Getenv("DB_PATH"), "SQLite DB file path")
 	flag.StringVar(&cfg.UserAgent, "ua", os.Getenv("UA"), "Browser User-Agent")
@@ -33,7 +35,7 @@ func LoadCfg() (*Config, error) {
 	flag.Parse()
 
 	// Validate
-	if cfg.StartURL == "" || cfg.DetailURL == "" {
+	if cfg.StartURL == "" || cfg.DetailDomain == "" || cfg.DetailURL == "" {
 		return nil, fmt.Errorf("missing required URLs")
 	}
 

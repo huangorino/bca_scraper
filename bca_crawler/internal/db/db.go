@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 const schema = `
 CREATE TABLE IF NOT EXISTS announcements (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	ann_id TEXT UNIQUE,
+	ann_id INTEGER UNIQUE,
 	title TEXT,
 	link TEXT UNIQUE,
 	company_name TEXT,
@@ -22,7 +23,8 @@ CREATE TABLE IF NOT EXISTS announcements (
 	date_posted DATETIME,
 	category TEXT,
 	ref_number TEXT,
-	content TEXT
+	content TEXT,
+	attachments TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_ann_date_posted ON announcements(date_posted);
 `
@@ -57,33 +59,77 @@ func Connect(path string) (*sql.DB, error) {
 // SaveAnnouncement inserts or updates a full announcement
 func SaveAnnouncement(db *sql.DB, a *models.Announcement) error {
 	now := time.Now().UTC()
-	_, err := db.Exec(`
+
+	attachmentsJSON, err := json.Marshal(a.Attachments)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
 	INSERT INTO announcements(
-		ann_id, title, link, company_name, stock_name, date_posted, category, ref_number, content)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		ann_id, title, link, company_name, stock_name, date_posted, category, ref_number, content, attachments)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	ON CONFLICT(ann_id)
 	DO UPDATE SET
-		title=excluded.title,
+		title=title,
 		link=excluded.link,
-		company_name=excluded.company_name,
-		stock_name=excluded.stock_name,
-		category=excluded.category,
-		ref_number=excluded.ref_number,
-		content=excluded.content;`,
-		a.AnnID, a.Title, a.Link, a.CompanyName, a.StockName, now, a.Category, a.RefNumber, a.Content)
+		company_name=company_name,
+		stock_name=stock_name,
+		category=category,
+		ref_number=ref_number,
+		content=excluded.content,
+		attachments=attachments;`,
+		a.AnnID, a.Title, a.Link, a.CompanyName, a.StockName, now, a.Category, a.RefNumber, a.Content, attachmentsJSON)
 
-	if err != nil {
-		utils.Logger.Errorf("❌ DB insert error for ann_id %s: %v", a.AnnID, err)
-	}
 	return err
 }
 
 // UpdateAnnouncementInfo updates parsed fields after HTML parsing
 func UpdateAnnouncement(db *sql.DB, a *models.Announcement) error {
-	_, err := db.Exec(`
+	attachmentsJSON, err := json.Marshal(a.Attachments)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
 		UPDATE announcements
-		SET company_name = ?, stock_name = ?, date_posted = ?, category = ?, ref_number = ?
+		SET company_name = ?, stock_name = ?, date_posted = ?, category = ?, ref_number = ?, attachments = ?
 		WHERE id = ?`,
-		a.CompanyName, a.StockName, a.DatePosted, a.Category, a.RefNumber, a.ID)
+		a.CompanyName, a.StockName, a.DatePosted, a.Category, a.RefNumber, attachmentsJSON, a.ID)
 	return err
+}
+
+func FetchUnparsedAnnouncements(db *sql.DB) ([]*models.Announcement, error) {
+	rows, err := db.Query(`
+		SELECT id, ann_id, content 
+		FROM announcements 
+		WHERE ref_number IS NULL ORDER BY ann_id ASC`)
+
+	if err != nil {
+		return nil, fmt.Errorf("query announcements: %w", err)
+	}
+	defer rows.Close()
+
+	var announcements []*models.Announcement
+	for rows.Next() {
+		var ann models.Announcement
+		if err := rows.Scan(&ann.ID, &ann.AnnID, &ann.Content); err != nil {
+			return nil, fmt.Errorf("scan row: %w", err)
+		}
+		announcements = append(announcements, &ann)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows error: %w", err)
+	}
+
+	return announcements, nil
+}
+
+func GetMaxAnnID(db *sql.DB) (int, error) {
+	var maxID int
+	err := db.QueryRow(`SELECT MAX(ann_id) FROM announcements`).Scan(&maxID)
+	if err != nil {
+		return 0, fmt.Errorf("query max ann_id: %w", err)
+	}
+	return maxID, nil
 }
