@@ -1,2 +1,4 @@
 bca_crawler/cmd/crawler/logs/
 bca_crawler/bursa.db
+bca_crawler/bursa.db
+bca_crawler/cmd/parser/logs

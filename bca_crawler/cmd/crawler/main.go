@@ -45,7 +45,7 @@ func main() {
 
 	log.Infof("✅ Parsed announcements. Max ann_id: %d", maxID)
 
-	for i := 3599843; i <= maxID; i++ {
+	for i := 3599870; i <= maxID; i++ {
 		annID := strconv.Itoa(i)
 		url := cfg.DetailURL + annID
 		log.Infof("🔎 Processing announcement ID: %s", annID)
