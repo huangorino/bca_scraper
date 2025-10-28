@@ -3,3 +3,6 @@ bca_crawler/bursa.db
 bca_crawler/bursa.db
 bca_crawler/cmd/parser/logs
 bca_crawler/bursa.db
+bca_crawler/cmd/parser-local/.env
+bca_crawler/cmd/parser-local/logs/
+bca_crawler/cmd/parser-local/CA/

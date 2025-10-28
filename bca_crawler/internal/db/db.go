@@ -92,10 +92,19 @@ func UpdateAnnouncement(db *sql.DB, a *models.Announcement) error {
 	}
 
 	_, err = db.Exec(`
-		UPDATE announcements
-		SET company_name = ?, stock_name = ?, date_posted = ?, category = ?, ref_number = ?, attachments = ?
-		WHERE id = ?`,
-		a.CompanyName, a.StockName, a.DatePosted, a.Category, a.RefNumber, attachmentsJSON, a.ID)
+		INSERT INTO announcements (
+			ann_id, company_name, stock_name, date_posted, category, ref_number, attachments, content
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(ann_id)
+		DO UPDATE SET
+			company_name = company_name,
+			stock_name = stock_name,
+			date_posted = date_posted,
+			category = category,
+			ref_number = ref_number,
+			attachments = attachments,
+			content = content;`,
+		a.AnnID, a.CompanyName, a.StockName, a.DatePosted, a.Category, a.RefNumber, attachmentsJSON, a.Content)
 	return err
 }
 

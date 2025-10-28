@@ -50,7 +50,7 @@ func InitCtx(targetURL *string, ua string) (string, error) {
 			chromedp.EvaluateAsDevTools(`() => { try { window.chrome = window.chrome || {}; window.chrome.webstore = {}; } catch(e){} }`, nil).Do(ctx)
 			return nil
 		}),
-		chromedp.Sleep(2*time.Second),
+		chromedp.Sleep(1*time.Second),
 		chromedp.Evaluate(`window.scrollTo(0, document.body.scrollHeight * 0.5);`, nil),
 		chromedp.Sleep(1*time.Second),
 		chromedp.OuterHTML("html", &body, chromedp.ByQuery),
@@ -148,7 +148,7 @@ func ParseAnnouncementHTML(ann *models.Announcement) error {
 					ann.DatePosted = utils.ParseDate(value)
 				case strings.EqualFold(label, "Category"):
 					ann.Category = value
-				case strings.EqualFold(label, "Reference Number"):
+				case strings.EqualFold(label, "Reference Number") || strings.EqualFold(label, "Reference No"):
 					ann.RefNumber = value
 				}
 			}

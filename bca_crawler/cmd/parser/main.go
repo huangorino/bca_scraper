@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
 	"bca_crawler/internal/db"
 	"bca_crawler/internal/services"
@@ -47,12 +48,13 @@ func main() {
 	updated := 0
 	for i := range data {
 		ann := data[i]
+		annID := strconv.Itoa(ann.AnnID)
 
 		// -------------------------------------------------------------------------
 		// 4️⃣ Parse Announcement HTML
 		// -------------------------------------------------------------------------
 		if err := services.ParseAnnouncementHTML(ann); err != nil {
-			log.Warnf("⚠️ Parse failed for ann_id %s: %v", ann.AnnID, err)
+			log.Warnf("⚠️ Parse failed for ann_id %s: %v", annID, err)
 			continue
 		}
 
@@ -60,12 +62,11 @@ func main() {
 		// 5️⃣ Update Announcement in DB
 		// -------------------------------------------------------------------------
 		if err := db.UpdateAnnouncement(database, ann); err != nil {
-			log.Errorf("❌ Update failed for ann_id %s: %v", ann.AnnID, err)
+			log.Errorf("❌ Update failed for ann_id %s: %v", annID, err)
 			continue
 		}
 
 		updated++
-		log.Infof("✅ Updated ann_id %s — %s | %s", ann.AnnID, ann.CompanyName, ann.StockName)
 	}
 
 	log.Infof("🏁 Done. Updated %d records.", updated)
