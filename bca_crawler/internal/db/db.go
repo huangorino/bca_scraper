@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 
 	"bca_crawler/internal/models"
 	"bca_crawler/internal/utils"
@@ -14,13 +14,13 @@ import (
 
 const schema = `
 CREATE TABLE IF NOT EXISTS announcements (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	id SERIAL PRIMARY KEY,
 	ann_id INTEGER UNIQUE,
 	title TEXT,
 	link TEXT UNIQUE,
 	company_name TEXT,
 	stock_name TEXT,
-	date_posted DATETIME,
+	date_posted TIMESTAMP,
 	category TEXT,
 	ref_number TEXT,
 	content TEXT,
@@ -30,8 +30,8 @@ CREATE INDEX IF NOT EXISTS idx_ann_date_posted ON announcements(date_posted);
 `
 
 // Setup initializes and verifies the database schema
-func Setup(path string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", path)
+func Setup(connStr string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", connStr+"?sslmode=disable")
 	if err != nil {
 		return nil, err
 	}
@@ -39,20 +39,20 @@ func Setup(path string) (*sql.DB, error) {
 		db.Close()
 		return nil, err
 	}
-	utils.Logger.Infof("✅ Database initialized and schema verified (%s)", path)
+	utils.Logger.Infof("✅ Database initialized and schema verified (%s)", connStr)
 	return db, nil
 }
 
-// Connect connects to an existing SQLite database without altering schema
-func Connect(path string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", path)
+// Connect connects to an existing PostgreSQL database without altering schema
+func Connect(connStr string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", connStr+"?sslmode=disable")
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("ping db: %w", err)
 	}
-	utils.Logger.Infof("✅ Connected to database: %s", path)
+	utils.Logger.Infof("✅ Connected to database: %s", connStr)
 	return db, nil
 }
 
@@ -68,17 +68,17 @@ func SaveAnnouncement(db *sql.DB, a *models.Announcement) error {
 	_, err = db.Exec(`
 	INSERT INTO announcements(
 		ann_id, title, link, company_name, stock_name, date_posted, category, ref_number, content, attachments)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 	ON CONFLICT(ann_id)
 	DO UPDATE SET
-		title=title,
-		link=excluded.link,
-		company_name=company_name,
-		stock_name=stock_name,
-		category=category,
-		ref_number=ref_number,
-		content=excluded.content,
-		attachments=attachments;`,
+		title = EXCLUDED.title,
+		link = EXCLUDED.link,
+		company_name = EXCLUDED.company_name,
+		stock_name = EXCLUDED.stock_name,
+		category = EXCLUDED.category,
+		ref_number = EXCLUDED.ref_number,
+		content = EXCLUDED.content,
+		attachments = EXCLUDED.attachments;`,
 		a.AnnID, a.Title, a.Link, a.CompanyName, a.StockName, now, a.Category, a.RefNumber, a.Content, attachmentsJSON)
 
 	return err
@@ -92,27 +92,27 @@ func UpdateAnnouncement(db *sql.DB, a *models.Announcement) error {
 	}
 
 	_, err = db.Exec(`
-		INSERT INTO announcements (
-			ann_id, company_name, stock_name, date_posted, category, ref_number, attachments, content
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-		ON CONFLICT(ann_id)
-		DO UPDATE SET
-			company_name = company_name,
-			stock_name = stock_name,
-			date_posted = date_posted,
-			category = category,
-			ref_number = ref_number,
-			attachments = attachments,
-			content = content;`,
+	INSERT INTO announcements (
+		ann_id, company_name, stock_name, date_posted, category, ref_number, attachments, content
+	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	ON CONFLICT(ann_id)
+	DO UPDATE SET
+		company_name = EXCLUDED.company_name,
+		stock_name = EXCLUDED.stock_name,
+		date_posted = EXCLUDED.date_posted,
+		category = EXCLUDED.category,
+		ref_number = EXCLUDED.ref_number,
+		attachments = EXCLUDED.attachments,
+		content = EXCLUDED.content;`,
 		a.AnnID, a.CompanyName, a.StockName, a.DatePosted, a.Category, a.RefNumber, attachmentsJSON, a.Content)
 	return err
 }
 
 func FetchUnparsedAnnouncements(db *sql.DB) ([]*models.Announcement, error) {
 	rows, err := db.Query(`
-		SELECT id, ann_id, content 
-		FROM announcements 
-		WHERE ref_number IS NULL ORDER BY ann_id ASC`)
+	SELECT id, ann_id, content 
+	FROM announcements 
+	WHERE ref_number IS NULL ORDER BY ann_id ASC`)
 
 	if err != nil {
 		return nil, fmt.Errorf("query announcements: %w", err)

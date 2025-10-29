@@ -62,7 +62,7 @@ func main() {
 
 	log.Infof("✅ Starting from ann_id: %d", startID)
 
-	for i := data; i <= maxID; i++ {
+	for i := startID; i <= maxID; i++ {
 		annID := strconv.Itoa(i)
 		url := cfg.DetailDomain + cfg.DetailURL + annID
 		log.Infof("🔎 Processing announcement ID: %s", annID)
