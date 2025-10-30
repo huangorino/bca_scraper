@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"os"
 	"strings"
 	"time"
 )
@@ -46,4 +47,20 @@ func IsEmpty(s string) bool {
 // htmlUnescape replaces HTML encoded characters like &amp; with &
 func HtmlUnescape(s string) string {
 	return strings.ReplaceAll(s, "&amp;", "&")
+}
+
+// SaveToFile writes the given content to a file at the specified path.
+func SaveToFile(filePath string, content []byte) error {
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.Write(content)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -18,7 +18,7 @@ func InitLogger() {
 	logDir := "logs"
 	if _, err := os.Stat(logDir); os.IsNotExist(err) {
 		if err := os.MkdirAll(logDir, 0755); err != nil {
-			fmt.Printf("❌ Failed to create log directory: %v\n", err)
+			fmt.Printf("[Error] Failed to create log directory: %v\n", err)
 			os.Exit(1)
 		}
 	}
@@ -38,12 +38,12 @@ func InitLogger() {
 	Logger.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp:   true,
 		TimestampFormat: "2006-01-02 15:04:05",
-		ForceColors:     true,
+		DisableColors:   true,
 		PadLevelText:    true,
 	})
 
 	Logger.SetLevel(logrus.InfoLevel)
 	Logger.Info("----------------------------------------------------------")
-	Logger.Infof("🟢 Log started at %s", time.Now().Format(time.RFC1123))
+	Logger.Infof("Log started at %s", time.Now().Format(time.RFC1123))
 	Logger.Info("----------------------------------------------------------")
 }

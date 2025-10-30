@@ -24,7 +24,21 @@ func InitCtx(targetURL *string, ua string) (string, error) {
 		chromedp.Flag("disable-blink-features", "AutomationControlled"),
 		chromedp.Flag("no-sandbox", true),
 		chromedp.Flag("disable-gpu", true),
-		chromedp.Flag("disable-dev-shm-usage", true),
+		chromedp.Flag("disable-dev-shm-usage", false),
+		chromedp.Flag("disable-logging", true),
+		chromedp.Flag("disable-sync", true),
+		chromedp.Flag("disable-translate", true),
+		chromedp.Flag("disable-extensions", true),
+		chromedp.Flag("disable-default-apps", true),
+		chromedp.Flag("disable-component-update", true),
+		chromedp.Flag("disable-crash-reporter", true),
+		chromedp.Flag("disable-notifications", true),
+		chromedp.Flag("no-crash-upload", true),
+		chromedp.Flag("disk-cache-dir", "/dev/null"),
+		chromedp.Flag("media-cache-dir", "/dev/null"),
+		chromedp.Flag("use-mock-keychain", true),
+		chromedp.Flag("single-process", true),
+		chromedp.Flag("incognito", true),
 		chromedp.UserAgent(ua),
 	)
 
@@ -37,7 +51,7 @@ func InitCtx(targetURL *string, ua string) (string, error) {
 	ctx, cancelTimeout := context.WithTimeout(ctx, 300*time.Second)
 	defer cancelTimeout()
 
-	utils.Logger.Infof("🌐 Navigating to %s", *targetURL)
+	utils.Logger.Infof("Navigating to %s", *targetURL)
 	var body string
 
 	if err := chromedp.Run(ctx,
@@ -56,13 +70,13 @@ func InitCtx(targetURL *string, ua string) (string, error) {
 		chromedp.OuterHTML("html", &body, chromedp.ByQuery),
 		LoadAndCaptureAction(&body),
 	); err != nil {
-		utils.Logger.Errorf("chromedp run error: %v", err)
+		utils.Logger.Errorf("[Error] chromedp run error: %v", err)
 		return "", err
 	}
 
 	if strings.Contains(strings.ToLower(body), "verify you are human") {
-		utils.Logger.Warn("⚠️ Cloudflare verification detected.")
-		return "", fmt.Errorf("cloudflare verification detected")
+		utils.Logger.Warn("Cloudflare verification detected.")
+		return "", fmt.Errorf("[Error] cloudflare verification detected")
 	}
 	return body, nil
 }
@@ -70,7 +84,7 @@ func InitCtx(targetURL *string, ua string) (string, error) {
 func LoadAndCaptureAction(body *string) chromedp.ActionFunc {
 	return chromedp.ActionFunc(func(ctx context.Context) error {
 		if err := network.Enable().Do(ctx); err != nil {
-			utils.Logger.Warnf("Network enable error: %v", err)
+			utils.Logger.Warnf("[Error] Network enable error: %v", err)
 		}
 		chromedp.EvaluateAsDevTools(`() => { Object.defineProperty(navigator, 'webdriver', {get: () => undefined}); }`, nil).Do(ctx)
 		chromedp.OuterHTML("html", body, chromedp.ByQuery).Do(ctx)
@@ -82,13 +96,13 @@ func LoadAndCaptureAction(body *string) chromedp.ActionFunc {
 func GetMaxAnnID(body string) int {
 	maxID := 0
 	if !strings.Contains(strings.ToLower(body), "announcement") && !strings.Contains(body, "<table") {
-		utils.Logger.Warn("⚠️ Announcement table not detected.")
+		utils.Logger.Warn("[Error] Announcement table not detected.")
 		return 0
 	}
 
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
 	if err != nil {
-		utils.Logger.Errorf("goquery parse error: %v", err)
+		utils.Logger.Errorf("[Error] goquery parse error: %v", err)
 		return 0
 	}
 
@@ -119,7 +133,7 @@ func GetMaxAnnID(body string) int {
 func ParseAnnouncementHTML(ann *models.Announcement) error {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(ann.Content))
 	if err != nil {
-		return fmt.Errorf("parse HTML: %w", err)
+		return fmt.Errorf("[Error] parse HTML: %w", err)
 	}
 
 	found := false
@@ -159,7 +173,7 @@ func ParseAnnouncementHTML(ann *models.Announcement) error {
 	})
 
 	if !found {
-		return fmt.Errorf("announcement info table not found")
+		return fmt.Errorf("[Error] announcement info table not found")
 	}
 
 	// --------------------------------------------

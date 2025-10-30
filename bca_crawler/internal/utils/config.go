@@ -36,7 +36,7 @@ func LoadCfg() (*Config, error) {
 
 	// Validate
 	if cfg.StartURL == "" || cfg.DetailDomain == "" || cfg.DetailURL == "" {
-		return nil, fmt.Errorf("missing required URLs")
+		return nil, fmt.Errorf("[Error] missing required URLs")
 	}
 
 	return cfg, nil

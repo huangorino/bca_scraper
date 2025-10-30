@@ -39,7 +39,7 @@ func Setup(connStr string) (*sql.DB, error) {
 		db.Close()
 		return nil, err
 	}
-	utils.Logger.Infof("✅ Database initialized and schema verified (%s)", connStr)
+	utils.Logger.Infof("Database initialized and schema verified (%s)", connStr)
 	return db, nil
 }
 
@@ -52,7 +52,7 @@ func Connect(connStr string) (*sql.DB, error) {
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("ping db: %w", err)
 	}
-	utils.Logger.Infof("✅ Connected to database: %s", connStr)
+	utils.Logger.Infof("Connected to database: %s", connStr)
 	return db, nil
 }
 
