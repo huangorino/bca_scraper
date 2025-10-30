@@ -20,25 +20,16 @@ import (
 // InitCtx launches Chrome headless to scrape and return HTML
 func InitCtx(targetURL *string, ua string) (string, error) {
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", true),
+		// Use the new headless mode
+		chromedp.Flag("headless", "new"),
 		chromedp.Flag("disable-blink-features", "AutomationControlled"),
 		chromedp.Flag("no-sandbox", true),
 		chromedp.Flag("disable-gpu", true),
-		chromedp.Flag("disable-dev-shm-usage", false),
-		chromedp.Flag("disable-logging", true),
-		chromedp.Flag("disable-sync", true),
-		chromedp.Flag("disable-translate", true),
-		chromedp.Flag("disable-extensions", true),
-		chromedp.Flag("disable-default-apps", true),
-		chromedp.Flag("disable-component-update", true),
-		chromedp.Flag("disable-crash-reporter", true),
-		chromedp.Flag("disable-notifications", true),
-		chromedp.Flag("no-crash-upload", true),
-		chromedp.Flag("disk-cache-dir", "/dev/null"),
-		chromedp.Flag("media-cache-dir", "/dev/null"),
-		chromedp.Flag("use-mock-keychain", true),
-		chromedp.Flag("single-process", true),
-		chromedp.Flag("incognito", true),
+		chromedp.Flag("disable-cache", true),
+		chromedp.Flag("disk-cache-size", "0"),
+		chromedp.Flag("media-cache-size", "0"),
+		chromedp.Flag("disable-application-cache", true),
+
 		chromedp.UserAgent(ua),
 	)
 
