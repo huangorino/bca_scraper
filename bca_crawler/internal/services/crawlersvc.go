@@ -18,7 +18,7 @@ import (
 )
 
 // InitCtx launches Chrome headless to scrape and return HTML
-func InitCtx(targetURL *string, ua string) (string, error) {
+func InitCtx(ua string) (context.Context, func()) {
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		// Use the new headless mode
 		chromedp.Flag("headless", "new"),
@@ -34,14 +34,23 @@ func InitCtx(targetURL *string, ua string) (string, error) {
 	)
 
 	allocCtx, cancelAlloc := chromedp.NewExecAllocator(context.Background(), opts...)
-	defer cancelAlloc()
 
 	ctx, cancel := chromedp.NewContext(allocCtx)
-	defer cancel()
 
 	ctx, cancelTimeout := context.WithTimeout(ctx, 300*time.Second)
-	defer cancelTimeout()
 
+	cleanup := func() {
+		utils.Logger.Infof("Cleaning up browser context...")
+		cancel()
+		cancelAlloc()
+		cancelTimeout()
+		utils.Logger.Infof("Cleanup complete.")
+	}
+
+	return ctx, cleanup
+}
+
+func RunPage(ctx context.Context, targetURL *string) (string, error) {
 	utils.Logger.Infof("Navigating to %s", *targetURL)
 	var body string
 
@@ -69,6 +78,7 @@ func InitCtx(targetURL *string, ua string) (string, error) {
 		utils.Logger.Warn("Cloudflare verification detected.")
 		return "", fmt.Errorf("[Error] cloudflare verification detected")
 	}
+
 	return body, nil
 }
 

@@ -30,7 +30,10 @@ func main() {
 	defer database.Close()
 
 	// Load Bursa main page
-	body, err := services.InitCtx(&cfg.StartURL, cfg.UserAgent)
+	chromeCtx, cancel := services.InitCtx(cfg.UserAgent)
+	defer cancel()
+
+	body, err := services.RunPage(chromeCtx, &cfg.StartURL)
 	if err != nil {
 		log.Fatalf("[Error] Failed to load start page: %v", err)
 		return
@@ -71,16 +74,12 @@ func main() {
 		var err error
 		maxRetries := 3
 		for attempt := 1; attempt <= maxRetries; attempt++ {
-			html, err = services.InitCtx(&url, cfg.UserAgent)
-			if err == nil {
+			html, err = services.RunPage(chromeCtx, &url)
+			if err == nil || !strings.Contains(err.Error(), "net::ERR_SOCKET_NOT_CONNECTED") {
 				break
 			}
-			if strings.Contains(err.Error(), "net::ERR_SOCKET_NOT_CONNECTED") {
-				log.Warnf("Retrying ID %d (attempt %d/%d)...", i, attempt, maxRetries)
-				time.Sleep(3 * time.Second)
-			} else {
-				break
-			}
+			log.Warnf("Retrying ID %d (attempt %d/%d)...", i, attempt, maxRetries)
+			time.Sleep(3 * time.Second)
 		}
 		if err != nil {
 			log.Errorf("[Error] Failed to load ID %d: %v", i, err)
