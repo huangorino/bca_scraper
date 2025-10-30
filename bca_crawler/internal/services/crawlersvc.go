@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"strconv"
 	"strings"
@@ -36,14 +37,13 @@ func InitCtx(ua string) (context.Context, func()) {
 
 	ctx, cancel := chromedp.NewContext(allocCtx)
 
-	// Increase timeout to 600 seconds
-	ctx, cancelTimeout := context.WithTimeout(ctx, 600*time.Second)
+	ctx, cancelTimeout := context.WithTimeout(ctx, 300*time.Second)
 
 	cleanup := func() {
 		utils.Logger.Infof("Cleaning up browser context...")
-		cancelTimeout()
 		cancel()
 		cancelAlloc()
+		cancelTimeout()
 		utils.Logger.Infof("Cleanup complete.")
 	}
 
@@ -56,6 +56,7 @@ func RunPage(ctx context.Context, targetURL *string) (string, error) {
 
 	if err := chromedp.Run(ctx,
 		chromedp.Navigate(*targetURL),
+		chromedp.Sleep(time.Duration(500+rand.Intn(1500))*time.Millisecond),
 		chromedp.WaitReady("body", chromedp.ByQuery), // Replace Sleep with WaitReady
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			_ = network.Enable().Do(ctx)
@@ -64,6 +65,9 @@ func RunPage(ctx context.Context, targetURL *string) (string, error) {
 			chromedp.EvaluateAsDevTools(`() => { try { window.chrome = window.chrome || {}; window.chrome.webstore = {}; } catch(e){} }`, nil).Do(ctx)
 			return nil
 		}),
+		chromedp.Sleep(1*time.Second),
+		chromedp.Evaluate(`window.scrollTo(0, document.body.scrollHeight * 0.5);`, nil),
+		chromedp.Sleep(1*time.Second),
 		chromedp.OuterHTML("html", &body, chromedp.ByQuery),
 		LoadAndCaptureAction(&body),
 	); err != nil {
