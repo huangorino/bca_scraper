@@ -24,6 +24,7 @@ func InitCtx(ua string) (context.Context, func()) {
 		chromedp.Flag("headless", "new"),
 		chromedp.Flag("disable-blink-features", "AutomationControlled"),
 		chromedp.Flag("no-sandbox", true),
+		chromedp.Flag("disable-dev-shm-usage", true),
 		chromedp.Flag("disable-gpu", true),
 		chromedp.Flag("disable-cache", true),
 		chromedp.Flag("disk-cache-size", "0"),
@@ -37,7 +38,7 @@ func InitCtx(ua string) (context.Context, func()) {
 
 	ctx, cancel := chromedp.NewContext(allocCtx)
 
-	ctx, cancelTimeout := context.WithTimeout(ctx, 300*time.Second)
+	ctx, cancelTimeout := context.WithTimeout(ctx, 30*time.Second)
 
 	cleanup := func() {
 		utils.Logger.Infof("Cleaning up browser context...")
@@ -57,7 +58,7 @@ func RunPage(ctx context.Context, targetURL *string) (string, error) {
 	if err := chromedp.Run(ctx,
 		chromedp.Navigate(*targetURL),
 		chromedp.Sleep(time.Duration(500+rand.Intn(1500))*time.Millisecond),
-		chromedp.WaitReady("body", chromedp.ByQuery), // Replace Sleep with WaitReady
+		chromedp.WaitReady("body", chromedp.ByQuery),
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			_ = network.Enable().Do(ctx)
 			chromedp.EvaluateAsDevTools(`() => { try { Object.defineProperty(navigator, 'webdriver', {get: () => undefined}); } catch(e){} }`, nil).Do(ctx)
