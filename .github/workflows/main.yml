@@ -1,0 +1,24 @@
+name: Trigger Server Deployment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    name: Run deploy.sh on server
+
+    steps:
+      - name: Verify environment
+        run: |
+          echo "Runner Host: $(hostname)"
+          echo "User: $(whoami)"
+          echo "Working Dir: $(pwd)"
+
+      - name: Execute deployment script
+        run: |
+          echo "Starting deployment via deploy.sh..."
+          bash /production/bca_scraper/deploy.sh
