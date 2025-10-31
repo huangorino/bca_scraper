@@ -7,3 +7,4 @@ bca_crawler/cmd/parser-local/.env
 bca_crawler/cmd/parser-local/logs/
 bca_crawler/cmd/parser-local/CA/
 bca_crawler/cmd/crawler-mkt/logs/
+bca_crawler/cmd/crawler-mkt/ms/

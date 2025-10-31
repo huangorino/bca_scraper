@@ -22,6 +22,7 @@ func InitCtx(ua string) (context.Context, func()) {
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		// Use the new headless mode
 		chromedp.Flag("headless", "new"),
+		// chromedp.Flag("headless", false),
 		chromedp.Flag("disable-blink-features", "AutomationControlled"),
 		chromedp.Flag("no-sandbox", true),
 		chromedp.Flag("disable-dev-shm-usage", true),
@@ -202,4 +203,27 @@ func ParseAnnouncementHTML(ann *models.Announcement) error {
 	}
 
 	return nil
+}
+
+func GetURLs(body string) ([]string, error) {
+	var urls []string
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("[Error] goquery parse error: %w", err)
+	}
+
+	doc.Find("a[href]").Each(func(i int, s *goquery.Selection) {
+		href, exists := s.Attr("href")
+		if !exists {
+			return
+		}
+		href = strings.TrimSpace(href)
+		if href == "" {
+			return
+		}
+
+		urls = append(urls, href)
+	})
+
+	return urls, nil
 }
