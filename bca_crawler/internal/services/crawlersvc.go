@@ -38,13 +38,10 @@ func InitCtx(ua string) (context.Context, func()) {
 
 	ctx, cancel := chromedp.NewContext(allocCtx)
 
-	ctx, cancelTimeout := context.WithTimeout(ctx, 30*time.Second)
-
 	cleanup := func() {
 		utils.Logger.Infof("Cleaning up browser context...")
 		cancel()
 		cancelAlloc()
-		cancelTimeout()
 		utils.Logger.Infof("Cleanup complete.")
 	}
 
