@@ -10,7 +10,7 @@ import (
 
 func InitGemini(ctx context.Context) *genai.Client {
 	// Provide your API key here
-	apiKey := "AIzaSyDo_Ntb1DycPNpM3rSDKu6KMM19FtpbsU4"
+	apiKey := ""
 
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{
 		APIKey:  apiKey,
