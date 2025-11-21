@@ -1,10 +1,14 @@
 bca_crawler/cmd/crawler/logs/
 bca_crawler/bursa.db
-bca_crawler/bursa.db
 bca_crawler/cmd/parser/logs
-bca_crawler/bursa.db
 bca_crawler/cmd/parser-local/.env
 bca_crawler/cmd/parser-local/logs/
 bca_crawler/cmd/parser-local/CA/
 bca_crawler/cmd/crawler-mkt/logs/
 bca_crawler/cmd/crawler-mkt/ms/
+bca_crawler/cmd/crawler-app/logs/
+bca_crawler/cmd/crawler-stock/logs/
+bca_crawler/cmd/parser-ai/logs/
+bca_crawler/cmd/parser-att/logs/
+bca_crawler/cmd/parser-board/logs/
+bca_crawler/cmd/parser-att/attachments/

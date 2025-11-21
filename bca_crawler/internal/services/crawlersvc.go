@@ -4,12 +4,9 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
-	"bca_crawler/internal/models"
 	"bca_crawler/internal/utils"
 
 	"github.com/PuerkitoBio/goquery"
@@ -91,118 +88,6 @@ func LoadAndCaptureAction(body *string) chromedp.ActionFunc {
 		chromedp.OuterHTML("html", body, chromedp.ByQuery).Do(ctx)
 		return nil
 	})
-}
-
-// GetMaxAnnID extracts the highest ann_id value from HTML
-func GetMaxAnnID(body string) int {
-	maxID := 0
-	if !strings.Contains(strings.ToLower(body), "announcement") && !strings.Contains(body, "<table") {
-		utils.Logger.Warn("[Error] Announcement table not detected.")
-		return 0
-	}
-
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
-	if err != nil {
-		utils.Logger.Errorf("[Error] goquery parse error: %v", err)
-		return 0
-	}
-
-	doc.Find("table tbody tr").Each(func(i int, s *goquery.Selection) {
-		s.Find("a[href]").Each(func(_ int, a *goquery.Selection) {
-			href, exists := a.Attr("href")
-			if !exists || !strings.Contains(href, "ann_id") {
-				return
-			}
-
-			u, err := url.Parse(href)
-			if err != nil {
-				return
-			}
-
-			q := u.Query()
-			if idStr := q.Get("ann_id"); idStr != "" {
-				if idInt, err := strconv.Atoi(idStr); err == nil && idInt > maxID {
-					maxID = idInt
-				}
-			}
-		})
-	})
-
-	return maxID
-}
-
-func ParseAnnouncementHTML(ann *models.Announcement) error {
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(ann.Content))
-	if err != nil {
-		return fmt.Errorf("[Error] parse HTML: %w", err)
-	}
-
-	found := false
-
-	// --------------------------------------------
-	// 1. Parse announcement info table
-	// --------------------------------------------
-	doc.Find("table").EachWithBreak(func(i int, s *goquery.Selection) bool {
-		// Only parse tables containing "Company Name"
-		if !strings.Contains(strings.ToLower(s.Text()), "company name") {
-			return true
-		}
-
-		s.Find("tr").Each(func(_ int, tr *goquery.Selection) {
-			tds := tr.Find("td")
-			if tds.Length() >= 2 {
-				label := utils.CleanString(tds.Eq(0).Text())
-				value := utils.CleanString(tds.Eq(1).Text())
-
-				switch {
-				case strings.EqualFold(label, "Company Name"):
-					ann.CompanyName = value
-				case strings.EqualFold(label, "Stock Name"):
-					ann.StockName = value
-				case strings.EqualFold(label, "Date Announced"):
-					ann.DatePosted = utils.ParseDate(value)
-				case strings.EqualFold(label, "Category"):
-					ann.Category = value
-				case strings.EqualFold(label, "Reference Number") || strings.EqualFold(label, "Reference No"):
-					ann.RefNumber = value
-				}
-			}
-		})
-
-		found = true
-		return false
-	})
-
-	if !found {
-		return fmt.Errorf("[Error] announcement info table not found")
-	}
-
-	// --------------------------------------------
-	// 2. Parse attachment URLs
-	// --------------------------------------------
-	var attachments []string
-
-	doc.Find("p.att_download_pdf a").Each(func(i int, s *goquery.Selection) {
-		href, exists := s.Attr("href")
-		if !exists {
-			return
-		}
-		href = strings.TrimSpace(href)
-		if href == "" {
-			return
-		}
-
-		// Convert &amp; → &
-		href = utils.HtmlUnescape(href)
-
-		attachments = append(attachments, href)
-	})
-
-	if len(attachments) > 0 {
-		ann.Attachments = attachments
-	}
-
-	return nil
 }
 
 func GetURLs(body string) ([]string, error) {

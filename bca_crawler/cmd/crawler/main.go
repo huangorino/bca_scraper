@@ -23,7 +23,7 @@ func main() {
 	log := utils.Logger
 
 	// Setup database
-	database, err := db.Setup(cfg.DBPath)
+	database, err := db.Connect(cfg.DBPath, db.DriverType(cfg.DBDriver))
 	if err != nil {
 		log.Fatalf("[Error] Failed to setup DB: %v", err)
 	}

@@ -6,58 +6,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	_ "modernc.org/sqlite"
 
 	"bca_crawler/internal/models"
-	"bca_crawler/internal/utils"
 )
 
-const schema = `
-CREATE TABLE IF NOT EXISTS announcements (
-	id SERIAL PRIMARY KEY,
-	ann_id INTEGER UNIQUE,
-	title TEXT,
-	link TEXT UNIQUE,
-	company_name TEXT,
-	stock_name TEXT,
-	date_posted TIMESTAMP,
-	category TEXT,
-	ref_number TEXT,
-	content TEXT,
-	attachments TEXT
-);
-CREATE INDEX IF NOT EXISTS idx_ann_date_posted ON announcements(date_posted);
-`
-
-// Setup initializes and verifies the database schema
-func Setup(connStr string) (*sql.DB, error) {
-	db, err := sql.Open("postgres", connStr+"?sslmode=disable")
-	if err != nil {
-		return nil, err
-	}
-	if _, err := db.Exec(schema); err != nil {
-		db.Close()
-		return nil, err
-	}
-	utils.Logger.Infof("Database initialized and schema verified (%s)", connStr)
-	return db, nil
-}
-
-// Connect connects to an existing PostgreSQL database without altering schema
-func Connect(connStr string) (*sql.DB, error) {
-	db, err := sql.Open("postgres", connStr+"?sslmode=disable")
-	if err != nil {
-		return nil, fmt.Errorf("open db: %w", err)
-	}
-	if err := db.Ping(); err != nil {
-		return nil, fmt.Errorf("ping db: %w", err)
-	}
-	utils.Logger.Infof("Connected to database: %s", connStr)
-	return db, nil
-}
-
 // SaveAnnouncement inserts or updates a full announcement
-func SaveAnnouncement(db *sql.DB, a *models.Announcement) error {
+func SaveAnnouncement(db *sqlx.DB, a *models.Announcement) error {
 	now := time.Now().UTC()
 
 	attachmentsJSON, err := json.Marshal(a.Attachments)
@@ -85,7 +42,7 @@ func SaveAnnouncement(db *sql.DB, a *models.Announcement) error {
 }
 
 // UpdateAnnouncementInfo updates parsed fields after HTML parsing
-func UpdateAnnouncement(db *sql.DB, a *models.Announcement) error {
+func UpdateAnnouncement(db *sqlx.DB, a *models.Announcement) error {
 	attachmentsJSON, err := json.Marshal(a.Attachments)
 	if err != nil {
 		return err
@@ -108,11 +65,11 @@ func UpdateAnnouncement(db *sql.DB, a *models.Announcement) error {
 	return err
 }
 
-func FetchUnparsedAnnouncements(db *sql.DB) ([]*models.Announcement, error) {
+func FetchUnparsedAnnouncements(db *sqlx.DB) ([]*models.Announcement, error) {
 	rows, err := db.Query(`
 	SELECT id, ann_id, content 
 	FROM announcements 
-	WHERE ref_number IS NULL ORDER BY ann_id ASC`)
+	WHERE ref_number = '' ORDER BY ann_id ASC`)
 
 	if err != nil {
 		return nil, fmt.Errorf("query announcements: %w", err)
@@ -134,11 +91,104 @@ func FetchUnparsedAnnouncements(db *sql.DB) ([]*models.Announcement, error) {
 	return announcements, nil
 }
 
-func GetMaxAnnID(db *sql.DB) (int, error) {
+func SaveStock(db *sqlx.DB, stock *models.Stock) error {
+	_, err := db.Exec(`
+	INSERT INTO stocks(
+		stock_code, stock_name, market, status)
+	VALUES ($1, $2, $3, $4)
+	ON CONFLICT(stock_code)
+	DO UPDATE SET
+		stock_name = EXCLUDED.stock_name,
+		market = EXCLUDED.market,
+		status = EXCLUDED.status;`,
+		stock.StockCode, stock.Name, stock.Market, stock.Status)
+	return err
+}
+
+func SaveEntity(db *sqlx.DB, e *models.Entity) error {
+	_, err := db.Exec(`
+	INSERT INTO entities(
+		type, name, stock_code, ic_number, age, gender, nationality, created_at)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	ON CONFLICT(name, IFNULL(ic_number, ''))
+	DO UPDATE SET
+		age = EXCLUDED.age,
+		gender = EXCLUDED.gender,
+		nationality = EXCLUDED.nationality,
+		updated_at = DATETIME('now');`,
+		e.Type, e.Name, e.StockCode, e.ICNumber, e.Age, e.Gender, e.Nationality, e.CreatedAt)
+
+	return err
+}
+
+func GetMaxAnnID(db *sqlx.DB) (int, error) {
 	var maxID int
 	err := db.QueryRow(`SELECT MAX(ann_id) FROM announcements`).Scan(&maxID)
 	if err != nil {
 		return 0, fmt.Errorf("query max ann_id: %w", err)
 	}
 	return maxID, nil
+}
+
+func FetchAnnouncementsByCategory(db *sqlx.DB, category string) ([]*models.Announcement, error) {
+	sqlQuery := `SELECT id, ann_id,
+      link, company_name, stock_name,
+      date_posted, category, ref_number,
+      attachments, content 
+      FROM announcements`
+
+	var args []interface{}
+	if category != "" {
+		if category == "attachments" {
+			sqlQuery += " WHERE attachments != 'null'"
+		} else {
+			sqlQuery += " WHERE category = $1"
+			args = append(args, category)
+		}
+	}
+
+	sqlQuery += " ORDER BY ann_id ASC"
+
+	var announcements []models.AnnouncementDB
+	err := db.Select(&announcements, sqlQuery, args...)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("sqlx select: %w", err)
+	}
+
+	var result []*models.Announcement
+	for i := range announcements {
+		ann, err := ConvertAnnouncementDBToAnnouncement(announcements[i])
+		if err != nil {
+			return nil, fmt.Errorf("convert announcement db to announcement: %w", err)
+		}
+
+		result = append(result, ann)
+	}
+
+	return result, nil
+}
+
+func ConvertAnnouncementDBToAnnouncement(a models.AnnouncementDB) (*models.Announcement, error) {
+	attachments := []string{}
+	if err := json.Unmarshal([]byte(a.Attachments.String), &attachments); err != nil {
+		return nil, fmt.Errorf("json unmarshal: %w", err)
+	}
+
+	return &models.Announcement{
+		ID:          a.ID,
+		AnnID:       a.AnnID,
+		Title:       a.Title.String,
+		Link:        a.Link.String,
+		CompanyName: a.CompanyName.String,
+		StockName:   a.StockName.String,
+		DatePosted:  a.DatePosted.String,
+		Category:    a.Category.String,
+		RefNumber:   a.RefNumber.String,
+		Content:     a.Content.String,
+		Attachments: attachments,
+	}, nil
 }

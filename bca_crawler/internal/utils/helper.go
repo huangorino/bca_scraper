@@ -64,3 +64,18 @@ func SaveToFile(filePath string, content []byte) error {
 
 	return nil
 }
+
+// StripMarkdown removes markdown code blocks from a string.
+func StripMarkdown(s string) string {
+	s = strings.TrimSpace(s)
+	if after, ok := strings.CutPrefix(s, "```json"); ok {
+		s = after
+	}
+	if after, ok := strings.CutPrefix(s, "```"); ok {
+		s = after
+	}
+	if after, ok := strings.CutSuffix(s, "```"); ok {
+		s = after
+	}
+	return s
+}

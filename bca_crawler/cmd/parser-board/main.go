@@ -26,7 +26,7 @@ func main() {
 	// -------------------------------------------------------------------------
 	// 2️⃣ Connect to Database
 	// -------------------------------------------------------------------------
-	database, err := db.Connect(cfg.DBPath, db.DriverType(cfg.DBDriver))
+	database, err := db.Setup(cfg.DBPath, db.DriverType(cfg.DBDriver))
 	if err != nil {
 		log.Fatalf("❌ Failed to setup DB: %v", err)
 	}
@@ -35,13 +35,13 @@ func main() {
 	// -------------------------------------------------------------------------
 	// 3️⃣ Fetch rows to process
 	// -------------------------------------------------------------------------
-	data, err := db.FetchUnparsedAnnouncements(database)
+	data, err := db.FetchAnnouncementsByCategory(database, "Change in Boardroom")
 	if err != nil {
-		log.Fatalf("❌ Failed to fetch unparsed announcements: %v", err)
+		log.Fatalf("❌ Failed to fetch change in boardroom announcements: %v", err)
 	}
 
 	if len(data) == 0 {
-		log.Info("⚠️ No unparsed announcements found. Exiting.")
+		log.Info("⚠️ No change in boardroom announcements found. Exiting.")
 		return
 	}
 
@@ -50,24 +50,40 @@ func main() {
 		ann := data[i]
 		annID := strconv.Itoa(ann.AnnID)
 
-		// -------------------------------------------------------------------------
-		// 4️⃣ Parse Announcement HTML
-		// -------------------------------------------------------------------------
-		if err := services.ParseAnnouncementHTML(ann); err != nil {
+		change, company, person, background, err := services.ParseBoardroomChangeHTML(ann)
+		if err != nil {
 			log.Warnf("⚠️ Parse failed for ann_id %s: %v", annID, err)
 			continue
 		}
 
-		// -------------------------------------------------------------------------
-		// 5️⃣ Update Announcement in DB
-		// -------------------------------------------------------------------------
-		if err := db.UpdateAnnouncement(database, ann); err != nil {
-			log.Errorf("❌ Update failed for ann_id %s: %v", annID, err)
+		companyID, err := db.UpdateEntity(database, company)
+		if err != nil {
+			log.Errorf("❌ Company update failed for ann_id %s: %v", annID, err)
+			continue
+		}
+
+		personID, err := db.UpdateEntity(database, person)
+		if err != nil {
+			log.Errorf("❌ Person update failed for ann_id %s: %v", annID, err)
+			continue
+		}
+
+		change.CompanyID = int(companyID)
+		change.PersonID = int(personID)
+
+		if err = db.UpdateBackground(database, personID, background); err != nil {
+			log.Errorf("❌ Qualifications update failed for ann_id %s: %v", annID, err)
+			continue
+		}
+
+		err = db.UpdateBoardroomChange(database, change)
+		if err != nil {
+			log.Errorf("❌ Boardroom change update failed for ann_id %s: %v", annID, err)
 			continue
 		}
 
 		updated++
-	}
 
-	log.Infof("🏁 Done. Updated %d records.", updated)
+		log.Infof("🏁 Done. Updated %d records.", updated)
+	}
 }
