@@ -70,11 +70,6 @@ func ParseAnnouncementHTML(ann *models.Announcement) error {
 	// 1. Parse announcement info table
 	// --------------------------------------------
 	doc.Find(".ven_announcement_info table").EachWithBreak(func(i int, s *goquery.Selection) bool {
-		// Only parse tables containing "Company Name"
-		if !strings.Contains(strings.ToLower(s.Text()), "company name") {
-			return true
-		}
-
 		s.Find("tr").Each(func(_ int, tr *goquery.Selection) {
 			tds := tr.Find("td")
 			if tds.Length() >= 2 {
