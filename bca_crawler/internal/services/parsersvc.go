@@ -59,63 +59,60 @@ func GetMaxAnnID(body string) int {
 }
 
 func ParseAnnouncementHTML(ann *models.Announcement) error {
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(ann.Content))
+	// --------------------------------------------
+	// 1. Extract Announcement Info section
+	// --------------------------------------------
+	section, err := extractAnnouncementInfoHTML(ann.Content)
 	if err != nil {
-		return fmt.Errorf("[Error] parse HTML: %w", err)
+		return fmt.Errorf("[Error] announcement info section not found")
 	}
 
-	found := false
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(section))
+	if err != nil {
+		return fmt.Errorf("[Error] parse announcement info HTML: %w", err)
+	}
 
 	// --------------------------------------------
-	// 1. Parse announcement info table
+	// 2. Parse Announcement Info fields
 	// --------------------------------------------
-	doc.Find(".ven_announcement_info table").EachWithBreak(func(i int, s *goquery.Selection) bool {
-		s.Find("tr").Each(func(_ int, tr *goquery.Selection) {
-			tds := tr.Find("td")
-			if tds.Length() >= 2 {
-				label := utils.CleanString(tds.Eq(0).Text())
-				value := utils.CleanString(tds.Eq(1).Text())
+	doc.Find("tr").Each(func(_ int, tr *goquery.Selection) {
+		tds := tr.Find("td")
+		if tds.Length() < 2 {
+			return
+		}
 
-				switch {
-				case strings.EqualFold(label, "Company Name"):
-					ann.CompanyName = value
-				case strings.EqualFold(label, "Stock Name"):
-					ann.StockName = value
-				case strings.EqualFold(label, "Date Announced"):
-					ann.DatePosted = utils.ParseDate(value)
-				case strings.EqualFold(label, "Category"):
-					ann.Category = value
-				case strings.EqualFold(label, "Reference Number") || strings.EqualFold(label, "Reference No"):
-					ann.RefNumber = value
-				}
-			}
-		})
+		label := utils.CleanString(tds.Eq(0).Text())
+		value := utils.CleanString(tds.Eq(1).Text())
 
-		found = true
-		return false
+		switch strings.ToLower(label) {
+		case "company name":
+			ann.CompanyName = value
+		case "stock name":
+			ann.StockName = value
+		case "date announced":
+			ann.DatePosted = utils.ParseDate(value)
+		case "category":
+			ann.Category = value
+		case "reference number", "reference no":
+			ann.RefNumber = value
+		}
 	})
 
-	if !found {
-		return fmt.Errorf("[Error] announcement info table not found")
-	}
-
 	// --------------------------------------------
-	// 2. Parse attachment URLs
+	// 3. Parse attachment URLs (if any)
 	// --------------------------------------------
 	var attachments []string
 
-	doc.Find("p.att_download_pdf a").Each(func(i int, s *goquery.Selection) {
-		href, exists := s.Attr("href")
-		if !exists {
-			return
-		}
-		href = strings.TrimSpace(href)
-		if href == "" {
+	doc.Find("p.att_download_pdf a").Each(func(_ int, s *goquery.Selection) {
+		href, ok := s.Attr("href")
+		if !ok {
 			return
 		}
 
-		// Convert &amp; → &
-		href = utils.HtmlUnescape(href)
+		href = strings.TrimSpace(utils.HtmlUnescape(href))
+		if href == "" {
+			return
+		}
 
 		attachments = append(attachments, href)
 	})
@@ -125,6 +122,40 @@ func ParseAnnouncementHTML(ann *models.Announcement) error {
 	}
 
 	return nil
+}
+
+func extractAnnouncementInfoHTML(html string) (string, error) {
+	start := strings.Index(html, `<div class="ven_announcement_info"`)
+	if start == -1 {
+		return "", fmt.Errorf("announcement info start not found")
+	}
+
+	slice := html[start:]
+
+	depth := 0
+	pos := 0
+
+	for {
+		openIdx := strings.Index(slice[pos:], "<div")
+		closeIdx := strings.Index(slice[pos:], "</div>")
+
+		if openIdx == -1 && closeIdx == -1 {
+			break
+		}
+
+		if openIdx != -1 && (openIdx < closeIdx || closeIdx == -1) {
+			depth++
+			pos += openIdx + 4
+		} else {
+			depth--
+			pos += closeIdx + 6
+			if depth == 0 {
+				return slice[:pos], nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("announcement info div not closed properly")
 }
 
 func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange, *models.Entity, *models.Entity, *models.Background, error) {
