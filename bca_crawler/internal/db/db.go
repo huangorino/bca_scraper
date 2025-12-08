@@ -64,6 +64,37 @@ func UpdateAnnouncement(db *sqlx.DB, a *models.Announcement) error {
 	return err
 }
 
+func FetchMissingAnnID(db *sqlx.DB) ([]int64, error) {
+	rows, err := db.Query(`
+		SELECT t1.ann_id + 1 AS missing_ann_id
+		FROM announcements t1
+		LEFT JOIN announcements t2
+			ON t2.ann_id = t1.ann_id + 1
+		WHERE t2.ann_id IS NULL
+		ORDER BY missing_ann_id ASC
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("query missing ann_id gaps: %w", err)
+	}
+	defer rows.Close()
+
+	var missing []int64
+
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("scan missing ann_id: %w", err)
+		}
+		missing = append(missing, id)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows error: %w", err)
+	}
+
+	return missing, nil
+}
+
 func FetchUnparsedAnnouncements(db *sqlx.DB) ([]*models.Announcement, error) {
 	rows, err := db.Query(`
 	SELECT id, ann_id, content 

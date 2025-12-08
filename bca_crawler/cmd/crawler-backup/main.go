@@ -33,40 +33,13 @@ func main() {
 	chromeCtx, cancel := services.InitCtx(cfg.UserAgent)
 	defer cancel()
 
-	body, err := services.RunPage(chromeCtx, &cfg.StartURL)
+	data, err := db.FetchMissingAnnID(database)
 	if err != nil {
-		log.Fatalf("[Error] Failed to load start page: %v", err)
-		return
+		log.Fatalf("Failed to fetch missing announcement IDs: %v", err)
 	}
 
-	log.Info("Page loaded successfully, parsing announcements...")
-	maxID := services.GetMaxAnnID(body)
-	if maxID == 0 {
-		log.Warn("No announcements found. Exiting.")
-		return
-	}
-
-	log.Infof("Parsed announcements. Max ann_id: %d", maxID)
-
-	startID := 1
-
-	// Fetch existing announcements to determine starting ID
-	data, err := db.GetMaxAnnID(database)
-	if err != nil {
-		log.Infof("[Error] Failed to fetch max ann_id from DB: %v", err)
-	} else {
-		if data >= maxID {
-			log.Info("Database is already up-to-date. No new announcements to scrape.")
-			return
-		}
-
-		startID = data + 1
-	}
-
-	log.Infof("Starting from ann_id: %d", startID)
-
-	for i := startID; i <= maxID; i++ {
-		annID := strconv.Itoa(i)
+	for _, id := range data {
+		annID := strconv.FormatInt(id, 10)
 		url := cfg.DetailDomain + cfg.DetailURL + annID
 		log.Infof("Processing announcement ID: %s", annID)
 
@@ -113,27 +86,27 @@ func main() {
 				break
 			}
 
-			log.Warnf("Retrying ID %d (attempt %d/%d)...", i, attempt, maxRetries)
+			log.Warnf("Retrying ID %d (attempt %d/%d)...", id, attempt, maxRetries)
 			time.Sleep(3 * time.Second)
 		}
 		if err != nil {
-			log.Errorf("[Error] Failed to load ID %d: %v", i, err)
+			log.Errorf("[Error] Failed to load ID %d: %v", id, err)
 			continue
 		}
 		if strings.Contains(html, "HTML file is not found") {
-			log.Warnf("Announcement ID %d not found (404). Skipping.", i)
+			log.Warnf("Announcement ID %d not found (404). Skipping.", id)
 			continue
 		}
 
 		a := &models.Announcement{
-			AnnID:   i,
+			AnnID:   int(id),
 			Link:    url,
 			Content: html,
 		}
 		if err := db.SaveAnnouncement(database, a); err != nil {
-			log.Errorf("[Error] Failed to save ID %d: %v", i, err)
+			log.Errorf("[Error] Failed to save ID %d: %v", id, err)
 		} else {
-			log.Infof("Saved announcement ID %d", i)
+			log.Infof("Saved announcement ID %d", id)
 		}
 	}
 

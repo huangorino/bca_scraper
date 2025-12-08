@@ -48,7 +48,7 @@ func main() {
 	// -------------------------------------------------------------------------
 	data, err := db.FetchAnnouncementsByCategory(database, "attachments")
 	if err != nil {
-		log.Fatalf("[Error] Failed to fetch change in boardroom announcements: %v", err)
+		log.Fatalf("[Error] Failed to fetch attachments: %v", err)
 	}
 
 	updated := 0
@@ -77,6 +77,8 @@ func main() {
 
 		updated++
 
+		//wait for 1 second
+		time.Sleep(1 * time.Second)
 	}
 	log.Infof("Completed. Processed %d records.", updated)
 }
