@@ -41,7 +41,6 @@ func SaveAnnouncement(db *sqlx.DB, a *models.Announcement) error {
 	return err
 }
 
-// UpdateAnnouncementInfo updates parsed fields after HTML parsing
 func UpdateAnnouncement(db *sqlx.DB, a *models.Announcement) error {
 	attachmentsJSON, err := json.Marshal(a.Attachments)
 	if err != nil {
