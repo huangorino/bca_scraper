@@ -71,14 +71,14 @@ func main() {
 				continue
 			}
 
+			//wait for 1 second
+			time.Sleep(1 * time.Second)
 		}
 
 		log.Infof("Downloaded %d attachments for announcement %s", len(ann.Attachments), annID)
 
 		updated++
 
-		//wait for 1 second
-		time.Sleep(1 * time.Second)
 	}
 	log.Infof("Completed. Processed %d records.", updated)
 }
