@@ -43,7 +43,7 @@ func UpdateEntity(db *sqlx.DB, entity *models.Entity) (int64, error) {
 	query := `
 		INSERT INTO entities (type, name, stock_code, age, gender, nationality) 
 		VALUES (?, ?, ?, ?, ?, ?)
-		ON CONFLICT(type, name, IFNULL(stock_code, '')) DO UPDATE SET
+		ON CONFLICT(type, name, COALESCE(stock_code, '')) DO UPDATE SET
 			age = excluded.age,
 			gender = excluded.gender,
 			nationality = excluded.nationality,
@@ -58,7 +58,7 @@ func UpdateEntity(db *sqlx.DB, entity *models.Entity) (int64, error) {
 	// for updates on conflict, so we query for the row using the unique keys.
 	var id int64
 	querySelect := `
-		SELECT id FROM entities WHERE type = ? AND name = ? AND IFNULL(stock_code, '') = ?
+		SELECT id FROM entities WHERE type = ? AND name = ? AND COALESCE(stock_code, '') = ?
 	`
 	err = db.QueryRow(db.Rebind(querySelect), entity.Type, entity.Name, entity.StockCode).Scan(&id)
 	if err != nil {

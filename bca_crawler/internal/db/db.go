@@ -215,7 +215,7 @@ func ConvertAnnouncementDBToAnnouncement(a models.AnnouncementDB) (*models.Annou
 		Link:        a.Link.String,
 		CompanyName: a.CompanyName.String,
 		StockName:   a.StockName.String,
-		DatePosted:  a.DatePosted.String,
+		DatePosted:  a.DatePosted.Time,
 		Category:    a.Category.String,
 		RefNumber:   a.RefNumber.String,
 		Content:     a.Content.String,
