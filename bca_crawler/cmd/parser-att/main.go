@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -62,7 +63,12 @@ func main() {
 				continue
 			}
 
-			url := cfg.DetailDomain + attURL
+			var url string
+			if !strings.Contains(attURL, "http") {
+				url = cfg.DetailDomain + attURL
+			} else {
+				url = attURL
+			}
 
 			destPath := fmt.Sprintf("attachments/%s/", annID)
 
