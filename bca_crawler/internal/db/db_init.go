@@ -119,6 +119,50 @@ CREATE TABLE IF NOT EXISTS daily_stock_prices (
 CREATE INDEX IF NOT EXISTS idx_daily_stock_prices_stock_code ON daily_stock_prices(stock_code);
 CREATE INDEX IF NOT EXISTS idx_daily_stock_prices_date ON daily_stock_prices(date);
 
+CREATE TABLE IF NOT EXISTS entities (
+    id SERIAL PRIMARY KEY,
+    type TEXT NOT NULL,
+    name TEXT NOT NULL,
+    stock_code TEXT,
+    age INTEGER,
+    gender TEXT,
+    nationality TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_entities_type_name_stock
+ON entities (type, name, COALESCE(stock_code, ''));
+
+CREATE TABLE IF NOT EXISTS boardroom_changes (
+    id SERIAL PRIMARY KEY,
+    company_id INTEGER REFERENCES entities(id),
+    person_id INTEGER REFERENCES entities(id),
+    ann_id INTEGER UNIQUE,
+    category TEXT,
+    date_announced DATE,
+    date_of_change DATE,
+    designation TEXT,
+    previous_position TEXT,
+    remarks TEXT,
+    directorate TEXT,
+    type_of_change TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS backgrounds (
+    id SERIAL PRIMARY KEY,
+    entity_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+    qualification TEXT,
+    working_experience TEXT,
+    directorships TEXT,
+    family_relationship TEXT,
+    conflict_of_interest TEXT,
+    interest_in_securities TEXT
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_backgrounds_entity_id
+ON backgrounds(entity_id);
 `
 
 // DriverType represents supported database drivers

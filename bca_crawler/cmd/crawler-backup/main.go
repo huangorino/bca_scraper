@@ -12,6 +12,18 @@ import (
 )
 
 func main() {
+	retryTriggers := []string{
+		"Web server is returning an unknown error",
+		"SSL handshake failed",
+		"A timeout occurred",
+		"Just a moment",
+		"Connection timed out",
+		"Internal server error",
+		"you have been blocked",
+		"SYSTEM MAINTENANCE NOTICE",
+		"HTML file is not found",
+	}
+
 	// Load configuration
 	cfg, err := utils.LoadCfg()
 	if err != nil {
@@ -46,17 +58,6 @@ func main() {
 		var html string
 		var err error
 		maxRetries := 3
-		retryTriggers := []string{
-			"Web server is returning an unknown error",
-			"SSL handshake failed",
-			"A timeout occurred",
-			"Just a moment",
-			"Connection timed out",
-			"Internal server error",
-			"you have been blocked",
-			"SYSTEM MAINTENANCE NOTICE",
-			"HTML file is not found",
-		}
 
 		for attempt := 1; attempt <= maxRetries; attempt++ {
 			html, err = services.RunPage(chromeCtx, &url)
