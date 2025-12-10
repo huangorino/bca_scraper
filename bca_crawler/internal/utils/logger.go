@@ -29,7 +29,7 @@ func InitLogger() {
 		MaxSize:    10,
 		MaxBackups: 7,
 		MaxAge:     30,
-		Compress:   true,
+		Compress:   false,
 	}
 
 	multiWriter := io.MultiWriter(os.Stdout, fileWriter)
