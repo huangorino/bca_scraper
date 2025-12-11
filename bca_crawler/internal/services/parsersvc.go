@@ -91,7 +91,7 @@ func ParseAnnouncementHTML(ann *models.Announcement) error {
 		case "stock name":
 			ann.StockName = value
 		case "date announced":
-			ann.DatePosted = *utils.ParseDate(value)
+			ann.DatePosted = safeTimeValue(utils.ParseDate(value))
 		case "category":
 			ann.Category = value
 		case "reference number", "reference no":
