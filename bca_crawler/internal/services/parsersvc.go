@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"bca_crawler/internal/models"
 	"bca_crawler/internal/utils"
@@ -210,7 +211,7 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 		Type:      "company",
 		Name:      companyName,
 		StockCode: stockCode,
-		CreatedAt: *change.DateAnnounced,
+		CreatedAt: safeTimeValue(change.DateAnnounced),
 	}
 
 	// --- Person fields ---
@@ -226,7 +227,7 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 		Age:         age,
 		Gender:      gender,
 		Nationality: nationality,
-		CreatedAt:   *change.DateAnnounced,
+		CreatedAt:   safeTimeValue(change.DateAnnounced),
 	}
 
 	background := &models.Background{
@@ -284,6 +285,15 @@ func findValueByLabel(doc *goquery.Document, label string) string {
 
 func tidy(s string) string {
 	return utils.CleanString(s)
+}
+
+// safeTimeValue safely dereferences a *time.Time pointer.
+// If the pointer is nil, returns time.Now() as a fallback.
+func safeTimeValue(t *time.Time) time.Time {
+	if t == nil {
+		return time.Now()
+	}
+	return *t
 }
 
 // detectLevel guesses the degree level from inline qualification text
