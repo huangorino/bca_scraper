@@ -25,8 +25,11 @@ func ParseDate(s string) time.Time {
 	}
 	layouts := []string{
 		"02 Jan 2006",
+		"2 Jan 2006",
 		"02/Jan/2006",
+		"2/Jan/2006",
 		"02/01/2006",
+		"2/1/2006",
 	}
 	for _, layout := range layouts {
 		if t, err := time.Parse(layout, s); err == nil {
