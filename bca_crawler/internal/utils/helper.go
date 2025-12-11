@@ -18,10 +18,10 @@ func CleanString(s string) string {
 
 // ParseDate attempts to normalize date formats like "16 Oct 2025"
 // into "YYYY-MM-DD". If parsing fails, returns the raw string.
-func ParseDate(s string) time.Time {
+func ParseDate(s string) *time.Time {
 	s = strings.TrimSpace(s)
 	if s == "" {
-		return time.Time{}
+		return nil
 	}
 	layouts := []string{
 		"02 Jan 2006",
@@ -33,10 +33,10 @@ func ParseDate(s string) time.Time {
 	}
 	for _, layout := range layouts {
 		if t, err := time.Parse(layout, s); err == nil {
-			return t
+			return &t
 		}
 	}
-	return time.Time{}
+	return nil
 }
 
 // Truncate safely trims a string to maxLen characters (UTF-8 safe).

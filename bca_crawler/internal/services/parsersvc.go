@@ -90,7 +90,7 @@ func ParseAnnouncementHTML(ann *models.Announcement) error {
 		case "stock name":
 			ann.StockName = value
 		case "date announced":
-			ann.DatePosted = utils.ParseDate(value)
+			ann.DatePosted = *utils.ParseDate(value)
 		case "category":
 			ann.Category = value
 		case "reference number", "reference no":
@@ -179,15 +179,15 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 		TypeOfChange:  tidy(findValueByLabel(doc, "Type of change")),
 	}
 
-	// --- Additional old-format fields ---
+	change.Designation = tidy(findValueByLabel(doc, "New Position"))
 	change.PreviousPosition = tidy(findValueByLabel(doc, "Previous Position"))
-	if change.PreviousPosition == "" {
-		change.PreviousPosition = tidy(findValueByLabel(doc, "Designation"))
-	}
 
-	change.Designation = tidy(findValueByLabel(doc, "Designation"))
 	if change.Designation == "" {
-		change.Designation = tidy(findValueByLabel(doc, "New Position"))
+		if change.TypeOfChange == "Appointment" {
+			change.Designation = tidy(findValueByLabel(doc, "Designation"))
+		} else {
+			change.PreviousPosition = tidy(findValueByLabel(doc, "Designation"))
+		}
 	}
 
 	change.Remarks = tidy(findValueByLabel(doc, "Remarks :"))
@@ -210,7 +210,7 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 		Type:      "company",
 		Name:      companyName,
 		StockCode: stockCode,
-		CreatedAt: change.DateAnnounced,
+		CreatedAt: *change.DateAnnounced,
 	}
 
 	// --- Person fields ---
@@ -226,7 +226,7 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 		Age:         age,
 		Gender:      gender,
 		Nationality: nationality,
-		CreatedAt:   change.DateAnnounced,
+		CreatedAt:   *change.DateAnnounced,
 	}
 
 	background := &models.Background{
