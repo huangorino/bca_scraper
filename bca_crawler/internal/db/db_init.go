@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS daily_stock_prices (
 CREATE INDEX IF NOT EXISTS idx_daily_stock_prices_stock_code ON daily_stock_prices(stock_code);
 CREATE INDEX IF NOT EXISTS idx_daily_stock_prices_date ON daily_stock_prices(date);
 
+
 CREATE TABLE IF NOT EXISTS entities (
     id SERIAL PRIMARY KEY,
     type TEXT NOT NULL,
@@ -69,8 +70,11 @@ CREATE TABLE IF NOT EXISTS entities (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX uq_entities_company ON entities (type, name, stock_code) WHERE type = 'company';
-CREATE UNIQUE INDEX uq_entities_person ON entities (type, name, birth_year) WHERE type = 'person';
+DROP INDEX IF EXISTS uq_entities_company;
+DROP INDEX IF EXISTS uq_entities_person;
+CREATE UNIQUE INDEX uq_entities_company ON entities (type, name, stock_code) WHERE type = 'COMPANY';
+CREATE UNIQUE INDEX uq_entities_person ON entities (type, name, birth_year) WHERE type = 'PERSON';
+
 
 CREATE TABLE IF NOT EXISTS boardroom_changes (
     id SERIAL PRIMARY KEY,

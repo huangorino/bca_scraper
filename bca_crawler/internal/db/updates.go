@@ -39,48 +39,65 @@ func UpdateBoardroomChange(db *sqlx.DB, change *models.BoardroomChange) error {
 	return nil
 }
 
-func UpdateEntity(db *sqlx.DB, entity *models.Entity) (int64, error) {
-	var query string
+func UpdateEntity(db *sqlx.DB, e *models.Entity) (int64, error) {
+	var (
+		conflictCols  string
+		conflictWhere string
+		stockCode     any = nil
+		birthYear     any = nil
+	)
 
-	if entity.Type == "company" {
-		query = `
-		INSERT INTO entities (type, name, title, stock_code, birth_year, gender, nationality, created_at) 
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-		ON CONFLICT ON CONSTRAINT uq_entities_company 
-		DO UPDATE SET
-			title        = EXCLUDED.title,
-			gender       = EXCLUDED.gender,
-			nationality  = EXCLUDED.nationality,
-			updated_at   = CURRENT_TIMESTAMP
-	`
+	if e.Type == "COMPANY" {
+		conflictCols = "(type, name, stock_code)"
+		conflictWhere = "type = 'COMPANY'"
+		stockCode = e.StockCode
 	} else {
-		query = `
-		INSERT INTO entities (type, name, title, stock_code, birth_year, gender, nationality, created_at) 
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-		ON CONFLICT ON CONSTRAINT uq_entities_person 
-		DO UPDATE SET
-			title        = EXCLUDED.title,
-			gender       = EXCLUDED.gender,
-			nationality  = EXCLUDED.nationality,
-			updated_at   = CURRENT_TIMESTAMP
-	`
+		conflictCols = "(type, name, birth_year)"
+		conflictWhere = "type = 'PERSON'"
+		birthYear = e.BirthYear
 	}
 
-	_, err := db.Exec(db.Rebind(query), entity.Type, entity.Name, entity.Title, entity.StockCode, entity.BirthYear, entity.Gender, entity.Nationality, entity.CreatedAt)
+	query := fmt.Sprintf(`
+	INSERT INTO entities (
+		type,
+		name,
+		title,
+		stock_code,
+		birth_year,
+		gender,
+		nationality,
+		created_at
+	)
+	VALUES (
+		?, ?, ?, ?, ?, ?, ?, ?
+	)
+	ON CONFLICT %s
+	WHERE %s
+	DO UPDATE SET
+		title       = EXCLUDED.title,
+		gender      = EXCLUDED.gender,
+		nationality = EXCLUDED.nationality,
+		updated_at  = CURRENT_TIMESTAMP
+	RETURNING id
+	`, conflictCols, conflictWhere)
+
+	var id int64
+	err := db.QueryRowx(
+		db.Rebind(query),
+		e.Type,
+		e.Name,
+		e.Title,
+		stockCode,
+		birthYear,
+		e.Gender,
+		e.Nationality,
+		e.CreatedAt,
+	).Scan(&id)
+
 	if err != nil {
 		return 0, fmt.Errorf("failed to upsert entity: %w", err)
 	}
 
-	// After the upsert, we need to fetch the ID. LastInsertId is not reliable
-	// for updates on conflict, so we query for the row using the unique keys.
-	var id int64
-	querySelect := `
-		SELECT id FROM entities WHERE type = ? AND name = ? AND COALESCE(stock_code, '') = ?
-	`
-	err = db.QueryRow(db.Rebind(querySelect), entity.Type, entity.Name, entity.StockCode).Scan(&id)
-	if err != nil {
-		return 0, fmt.Errorf("failed to retrieve entity ID after upsert: %w", err)
-	}
 	return id, nil
 }
 
