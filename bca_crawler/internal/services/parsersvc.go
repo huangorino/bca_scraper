@@ -190,6 +190,10 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 		TypeOfChange:  tidy(findValueByLabel(doc, "Type of change")),
 	}
 
+	if change.DateAnnounced == nil {
+		change.DateAnnounced = &ann.DatePosted
+	}
+
 	change.Designation = tidy(findValueByLabel(doc, "New Position"))
 	change.PreviousPosition = tidy(findValueByLabel(doc, "Previous Position"))
 
