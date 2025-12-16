@@ -39,6 +39,59 @@ func ParseDate(s string) *time.Time {
 	return nil
 }
 
+func TrimAbbreviation(s string) (name string, abbr string) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return "", ""
+	}
+
+	// Normalize spacing
+	s = strings.Join(strings.Fields(s), " ")
+
+	// Known abbreviation tokens (single words)
+	abbrTokens := map[string]struct{}{
+		"MR": {}, "MR.": {},
+		"MISS": {},
+		"MS":   {},
+		"MRS":  {},
+		"DR":   {}, "DR.": {},
+		"PROF": {}, "PROF.": {}, "PROFESSOR": {},
+		"DATO": {}, "DATO'": {},
+		"DATUK":   {},
+		"DATIN":   {},
+		"TAN SRI": {}, "TAN SERI": {},
+		"SRI": {}, "SERI": {},
+		"PUAN": {}, "ENCIK": {}, "TUAN": {},
+		"ABANG":   {},
+		"SENATOR": {},
+		"YB":      {}, "YB.": {}, "Y.B.": {}, "B.": {},
+		"Y": {}, "Y.": {},
+		"YBHG": {}, "BHG": {}, "BHG.": {},
+		"YBM": {}, "YBM.": {}, "Y.B.M.": {},
+		"YDH": {}, "YDH.": {}, "Y.D.H.": {}, "DH.": {},
+	}
+
+	words := strings.Split(s, " ")
+
+	// Walk from right → left, building suffix
+	var suffix []string
+	var names []string
+
+	for i := len(words) - 1; i >= 0; i-- {
+		if _, ok := abbrTokens[words[i]]; !ok {
+			names = append([]string{words[i]}, names...)
+			continue
+		}
+
+		suffix = append([]string{words[i]}, suffix...)
+	}
+
+	name = strings.TrimSpace(strings.Join(names, " "))
+	abbr = strings.TrimSpace(strings.Join(suffix, " "))
+
+	return name, abbr
+}
+
 // Truncate safely trims a string to maxLen characters (UTF-8 safe).
 // Useful when logging or inserting into DB columns with length limits.
 func Truncate(s string, maxLen int) string {

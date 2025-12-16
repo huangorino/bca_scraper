@@ -121,36 +121,6 @@ func FetchUnparsedAnnouncements(db *sqlx.DB) ([]*models.Announcement, error) {
 	return announcements, nil
 }
 
-func SaveStock(db *sqlx.DB, stock *models.Stock) error {
-	_, err := db.Exec(`
-	INSERT INTO stocks(
-		stock_code, stock_name, market, status)
-	VALUES ($1, $2, $3, $4)
-	ON CONFLICT(stock_code)
-	DO UPDATE SET
-		stock_name = EXCLUDED.stock_name,
-		market = EXCLUDED.market,
-		status = EXCLUDED.status;`,
-		stock.StockCode, stock.Name, stock.Market, stock.Status)
-	return err
-}
-
-func SaveEntity(db *sqlx.DB, e *models.Entity) error {
-	_, err := db.Exec(`
-	INSERT INTO entities(
-		type, name, stock_code, ic_number, age, gender, nationality, created_at)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-	ON CONFLICT(name, IFNULL(ic_number, ''))
-	DO UPDATE SET
-		age = EXCLUDED.age,
-		gender = EXCLUDED.gender,
-		nationality = EXCLUDED.nationality,
-		updated_at = DATETIME('now');`,
-		e.Type, e.Name, e.StockCode, e.ICNumber, e.Age, e.Gender, e.Nationality, e.CreatedAt)
-
-	return err
-}
-
 func GetMaxAnnID(db *sqlx.DB) (int, error) {
 	var maxID int
 	err := db.QueryRow(`SELECT MAX(ann_id) FROM announcements`).Scan(&maxID)

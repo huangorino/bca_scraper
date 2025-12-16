@@ -60,6 +60,16 @@ func GetMaxAnnID(body string) int {
 }
 
 func ParseAnnouncementHTML(ann *models.Announcement) error {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(ann.Content))
+	if err != nil {
+		return fmt.Errorf("[Error] parse announcement info HTML: %w", err)
+	}
+
+	title := strings.TrimSpace(doc.Find("h3").First().Text())
+	if title != "" {
+		ann.Title = utils.CleanString(title)
+	}
+
 	// --------------------------------------------
 	// 1. Extract Announcement Info section
 	// --------------------------------------------
@@ -68,7 +78,7 @@ func ParseAnnouncementHTML(ann *models.Announcement) error {
 		return fmt.Errorf("[Error] announcement info section not found")
 	}
 
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(section))
+	doc, err = goquery.NewDocumentFromReader(strings.NewReader(section))
 	if err != nil {
 		return fmt.Errorf("[Error] parse announcement info HTML: %w", err)
 	}
@@ -208,25 +218,34 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 	}
 
 	company := &models.Entity{
-		Type:      "company",
-		Name:      companyName,
-		StockCode: stockCode,
+		Type:      strings.ToUpper("company"),
+		Name:      strings.ToUpper(companyName),
+		StockCode: strings.ToUpper(stockCode),
 		CreatedAt: safeTimeValue(change.DateAnnounced),
 	}
 
 	// --- Person fields ---
 	personName := tidy(findValueByLabel(doc, "Name"))
+	name, title := utils.TrimAbbreviation(personName)
 	ageStr := tidy(findValueByLabel(doc, "Age"))
 	age, _ := strconv.Atoi(ageStr)
+	birthYear := change.DateAnnounced.Year() - age
 	gender := tidy(findValueByLabel(doc, "Gender"))
 	nationality := tidy(findValueByLabel(doc, "Nationality"))
 
+	// Extract first character of gender, safely
+	genderCode := ""
+	if len(gender) > 0 {
+		genderCode = strings.ToUpper(gender[:1])
+	}
+
 	person := &models.Entity{
-		Type:        "person",
-		Name:        personName,
-		Age:         age,
-		Gender:      gender,
-		Nationality: nationality,
+		Type:        strings.ToUpper("person"),
+		Name:        strings.ToUpper(name),
+		Title:       strings.ToUpper(title),
+		BirthYear:   birthYear,
+		Gender:      genderCode,
+		Nationality: strings.ToUpper(nationality),
 		CreatedAt:   safeTimeValue(change.DateAnnounced),
 	}
 

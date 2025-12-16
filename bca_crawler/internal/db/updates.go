@@ -41,15 +41,15 @@ func UpdateBoardroomChange(db *sqlx.DB, change *models.BoardroomChange) error {
 
 func UpdateEntity(db *sqlx.DB, entity *models.Entity) (int64, error) {
 	query := `
-		INSERT INTO entities (type, name, stock_code, age, gender, nationality) 
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO entities (type, name, title, stock_code, birth_year, gender, nationality, created_at) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(type, name, COALESCE(stock_code, '')) DO UPDATE SET
-			age = excluded.age,
+			birth_year = excluded.birth_year,
 			gender = excluded.gender,
 			nationality = excluded.nationality,
 			updated_at = CURRENT_TIMESTAMP
 	`
-	_, err := db.Exec(db.Rebind(query), entity.Type, entity.Name, entity.StockCode, entity.Age, entity.Gender, entity.Nationality)
+	_, err := db.Exec(db.Rebind(query), entity.Type, entity.Name, entity.Title, entity.StockCode, entity.BirthYear, entity.Gender, entity.Nationality, entity.CreatedAt)
 	if err != nil {
 		return 0, fmt.Errorf("failed to upsert entity: %w", err)
 	}

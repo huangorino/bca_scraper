@@ -7,69 +7,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const schema_lite = `
-PRAGMA foreign_keys = ON;
-
-CREATE TABLE IF NOT EXISTS announcements (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    ann_id INTEGER UNIQUE,
-    title TEXT,
-    link TEXT UNIQUE,
-    company_name TEXT,
-    stock_name TEXT,
-    date_posted TEXT,
-    category TEXT,
-    ref_number TEXT,
-    content TEXT,
-    attachments TEXT
-);
-CREATE INDEX IF NOT EXISTS idx_ann_date_posted ON announcements(date_posted);
-
-CREATE TABLE IF NOT EXISTS entities (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    type TEXT NOT NULL,
-    name TEXT NOT NULL,
-    stock_code TEXT,
-    age INTEGER,
-    gender TEXT,
-    nationality TEXT,
-    created_at TEXT DEFAULT (DATETIME('now')),
-    updated_at TEXT DEFAULT (DATETIME('now'))
-);
-CREATE UNIQUE INDEX IF NOT EXISTS ux_entities_type_name_stock ON entities(type, name, IFNULL(stock_code, ''));
-
-CREATE TABLE IF NOT EXISTS boardroom_changes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    company_id INTEGER,
-    person_id INTEGER,
-    ann_id INTEGER UNIQUE,
-    category TEXT,
-    date_announced TEXT,
-    date_of_change TEXT,
-    designation TEXT,
-    previous_position TEXT,
-    remarks TEXT,
-    directorate TEXT,
-    type_of_change TEXT,
-    created_at TEXT DEFAULT (DATETIME('now')),
-    FOREIGN KEY (company_id) REFERENCES entities(id),
-    FOREIGN KEY (person_id) REFERENCES entities(id)
-);
-
-CREATE TABLE IF NOT EXISTS backgrounds (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    entity_id INTEGER,
-    qualification TEXT,
-    working_experience TEXT,
-    directorships TEXT,
-    family_relationship TEXT,
-    conflict_of_interest TEXT,
-    interest_in_securities TEXT,
-    FOREIGN KEY (entity_id) REFERENCES entities(id) ON DELETE CASCADE
-);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_backgrounds_entity_id ON backgrounds(entity_id);
-`
-
 const schema_pg = `
 CREATE TABLE IF NOT EXISTS announcements (
 	id SERIAL PRIMARY KEY,
@@ -123,8 +60,9 @@ CREATE TABLE IF NOT EXISTS entities (
     id SERIAL PRIMARY KEY,
     type TEXT NOT NULL,
     name TEXT NOT NULL,
+    title TEXT,
     stock_code TEXT,
-    age INTEGER,
+    birth_year INTEGER,
     gender TEXT,
     nationality TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -169,7 +107,6 @@ ON backgrounds(entity_id);
 type DriverType string
 
 const (
-	DriverSQLite   DriverType = "sqlite"
 	DriverPostgres DriverType = "postgres"
 )
 
@@ -179,16 +116,6 @@ func Setup(connStr string, driver DriverType) (*sqlx.DB, error) {
 	var err error
 
 	switch driver {
-	case DriverSQLite:
-		db, err = sqlx.Open("sqlite", connStr)
-		if err != nil {
-			return nil, err
-		}
-
-		if _, err := db.Exec(schema_lite); err != nil {
-			db.Close()
-			return nil, err
-		}
 	case DriverPostgres:
 		db, err = sqlx.Open("postgres", connStr+"?sslmode=disable")
 		if err != nil {
@@ -211,8 +138,6 @@ func Connect(connStr string, driver DriverType) (*sqlx.DB, error) {
 	var err error
 
 	switch driver {
-	case DriverSQLite:
-		db, err = sqlx.Open("sqlite", connStr)
 	case DriverPostgres:
 		db, err = sqlx.Open("postgres", connStr+"?sslmode=disable")
 	}
