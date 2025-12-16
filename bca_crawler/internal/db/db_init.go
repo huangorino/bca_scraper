@@ -69,8 +69,8 @@ CREATE TABLE IF NOT EXISTS entities (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS ux_entities_type_name_stock
-ON entities (type, name, COALESCE(stock_code, ''));
+CREATE UNIQUE INDEX uq_entities_company ON entities (type, name, stock_code) WHERE type = 'company';
+CREATE UNIQUE INDEX uq_entities_person ON entities (type, name, birth_year) WHERE type = 'person';
 
 CREATE TABLE IF NOT EXISTS boardroom_changes (
     id SERIAL PRIMARY KEY,
