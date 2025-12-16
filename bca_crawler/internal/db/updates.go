@@ -40,15 +40,32 @@ func UpdateBoardroomChange(db *sqlx.DB, change *models.BoardroomChange) error {
 }
 
 func UpdateEntity(db *sqlx.DB, entity *models.Entity) (int64, error) {
-	query := `
+	var query string
+
+	if entity.Type == "company" {
+		query = `
 		INSERT INTO entities (type, name, title, stock_code, birth_year, gender, nationality, created_at) 
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-		ON CONFLICT DO UPDATE SET
+		ON CONFLICT ON CONSTRAINT uq_entities_company 
+		DO UPDATE SET
 			title        = EXCLUDED.title,
 			gender       = EXCLUDED.gender,
 			nationality  = EXCLUDED.nationality,
 			updated_at   = CURRENT_TIMESTAMP
 	`
+	} else {
+		query = `
+		INSERT INTO entities (type, name, title, stock_code, birth_year, gender, nationality, created_at) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT ON CONSTRAINT uq_entities_person 
+		DO UPDATE SET
+			title        = EXCLUDED.title,
+			gender       = EXCLUDED.gender,
+			nationality  = EXCLUDED.nationality,
+			updated_at   = CURRENT_TIMESTAMP
+	`
+	}
+
 	_, err := db.Exec(db.Rebind(query), entity.Type, entity.Name, entity.Title, entity.StockCode, entity.BirthYear, entity.Gender, entity.Nationality, entity.CreatedAt)
 	if err != nil {
 		return 0, fmt.Errorf("failed to upsert entity: %w", err)
