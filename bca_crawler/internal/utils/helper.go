@@ -1,10 +1,7 @@
 package utils
 
 import (
-	"fmt"
 	"os"
-	"regexp"
-	"sort"
 	"strings"
 	"time"
 )
@@ -92,84 +89,89 @@ func StripMarkdown(s string) string {
 	return s
 }
 
-var canonicalTitles = []string{
-	"SENATOR DATO'",
-	"SENATOR DATUK",
-	"SENATOR",
-	"YABHG",
-	"YBHG",
-	"YAB",
-	"YBM",
-	"YTM",
-	"YAM",
-	"YM",
-	"YB",
-	"TUN",
-	"TAN SRI DATO'",
-	"TAN SRI",
-	"DATO' SRI",
-	"DATO'",
-	"DATO",
-	"DATUK SERI",
-	"DATUK",
-	"DATIN",
-	"PUAN",
-	"ENCIK",
-	"CIK",
-	"DR",
-	"IR",
-	"HAJI",
-	"MR",
-	"MISS",
-	"MADAM",
+var atomicTitles = map[string]bool{
+	// Y* prefixes
+	"YABHG": true,
+	"YBHG":  true,
+	"YAB":   true,
+	"YBM":   true,
+	"YTM":   true,
+	"YAM":   true,
+	"YM":    true,
+	"YB":    true,
+
+	// Roles
+	"SENATOR": true,
+
+	// Honorifics
+	"TUN":   true,
+	"TAN":   true,
+	"SRI":   true,
+	"DATO":  true,
+	"DATO'": true,
+	"DATUK": true,
+	"DATIN": true,
+	"PUAN":  true,
+	"ENCIK": true,
+	"CIK":   true,
+	"DR":    true,
+	"IR":    true,
+	"HAJI":  true,
+	"MR":    true,
+	"MISS":  true,
+	"MADAM": true,
+	"SERI":  true,
 }
 
-var titleRegex []*regexp.Regexp
-
-func init() {
-	// Sort by word count DESC, then length DESC
-	sort.SliceStable(canonicalTitles, func(i, j int) bool {
-		wi := len(strings.Fields(canonicalTitles[i]))
-		wj := len(strings.Fields(canonicalTitles[j]))
-		if wi != wj {
-			return wi > wj
-		}
-		return len(canonicalTitles[i]) > len(canonicalTitles[j])
-	})
-
-	for _, t := range canonicalTitles {
-		pattern := fmt.Sprintf(`^(%s)(\s+|$)`, regexp.QuoteMeta(t))
-		titleRegex = append(titleRegex, regexp.MustCompile(pattern))
-	}
+var allowedPairs = map[string]bool{
+	"TAN SRI":    true,
+	"DATO' SRI":  true,
+	"DATUK SERI": true,
 }
 
 func SplitTitle(fullName string) (title string, name string) {
 	n := normalize(fullName)
+	tokens := strings.Fields(n)
 
-	for _, re := range titleRegex {
-		if re.MatchString(n) {
-			m := re.FindStringSubmatch(n)
-			title = m[1]
-			name = strings.TrimSpace(n[len(m[0]):])
-			return title, name
+	var consumed []string
+	i := 0
+
+	for i < len(tokens) {
+		// Try pair first
+		if i+1 < len(tokens) {
+			pair := tokens[i] + " " + tokens[i+1]
+			if allowedPairs[pair] {
+				consumed = append(consumed, pair)
+				i += 2
+				continue
+			}
 		}
+
+		// Single token
+		if atomicTitles[tokens[i]] {
+			consumed = append(consumed, tokens[i])
+			i++
+			continue
+		}
+
+		break
 	}
 
-	return "", n
+	title = strings.Join(consumed, " ")
+	name = strings.Join(tokens[i:], " ")
+	return title, name
 }
 
+/*
+Normalization based on dataset
+*/
 func normalize(s string) string {
 	s = strings.TrimSpace(s)
 	s = strings.ToUpper(s)
 
-	// normalize unicode apostrophe
 	s = strings.ReplaceAll(s, "’", "'")
-
-	// remove dots (YABHG., DR., etc.)
 	s = strings.ReplaceAll(s, ".", "")
 
-	// collapse whitespace
 	s = strings.Join(strings.Fields(s), " ")
-
 	return s
 }
