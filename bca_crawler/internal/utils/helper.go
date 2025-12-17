@@ -164,6 +164,7 @@ func normalize(s string) string {
 
 	// normalize unicode apostrophe
 	s = strings.ReplaceAll(s, "’", "'")
+	s = strings.ReplaceAll(s, "'", "")
 
 	// remove dots (YABHG., DR., etc.)
 	s = strings.ReplaceAll(s, ".", "")
