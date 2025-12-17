@@ -50,6 +50,7 @@ func TrimAbbreviation(s string) (name string, title string) {
 
 	// Known abbreviation tokens (single words)
 	abbrTokens := map[string]struct{}{
+		"TAN SRI": {}, "TAN SERI": {},
 		"BHG": {}, "BHG.": {},
 		"DATO": {}, "DATO'": {},
 		"DATIN": {},
@@ -61,7 +62,6 @@ func TrimAbbreviation(s string) (name string, title string) {
 		"PROF": {}, "PROF.": {}, "PROFESSOR": {},
 		"SENATOR": {},
 		"SRI":     {}, "SERI": {},
-		"TAN SRI": {}, "TAN SERI": {},
 		"Y": {}, "Y.": {},
 		"YB": {}, "YB.": {}, "Y.B.": {}, "B.": {},
 		"YBHG": {},
@@ -69,37 +69,34 @@ func TrimAbbreviation(s string) (name string, title string) {
 		"YDH": {}, "YDH.": {}, "Y.D.H.": {}, "DH.": {},
 	}
 
-	words := strings.Split(s, " ")
+	for i := range abbrTokens {
+		if strings.Contains(s, i) {
+			words := strings.Split(s, " ")
 
-	// if "TAN SRI" or "TAN SERI" is found, join them
-	for i := range words {
-		if words[i] == "TAN" && (words[i+1] == "SRI" || words[i+1] == "SERI") {
-			words[i] = "TAN SRI"
-			words = append(words[:i+1], words[i+2:]...)
+			// Walk from right → left, building suffix
+			var suffix []string
+			var names []string
+
+			for i := len(words) - 1; i >= 0; i-- {
+				abbr := words[i]
+				if strings.Contains(abbr, ".") || strings.Contains(abbr, "'") {
+					abbr = strings.ReplaceAll(abbr, ".", "")
+					abbr = strings.ReplaceAll(abbr, "'", "")
+				}
+
+				if _, ok := abbrTokens[abbr]; !ok {
+					names = append([]string{abbr}, names...)
+					continue
+				}
+
+				suffix = append([]string{abbr}, suffix...)
+			}
+
+			name = strings.TrimSpace(strings.Join(names, " "))
+			title = strings.TrimSpace(strings.Join(suffix, " "))
+			break
 		}
 	}
-
-	// Walk from right → left, building suffix
-	var suffix []string
-	var names []string
-
-	for i := len(words) - 1; i >= 0; i-- {
-		abbr := words[i]
-		if strings.Contains(abbr, ".") || strings.Contains(abbr, "'") {
-			abbr = strings.ReplaceAll(abbr, ".", "")
-			abbr = strings.ReplaceAll(abbr, "'", "")
-		}
-
-		if _, ok := abbrTokens[abbr]; !ok {
-			names = append([]string{abbr}, names...)
-			continue
-		}
-
-		suffix = append([]string{abbr}, suffix...)
-	}
-
-	name = strings.TrimSpace(strings.Join(names, " "))
-	title = strings.TrimSpace(strings.Join(suffix, " "))
 
 	return name, title
 }
