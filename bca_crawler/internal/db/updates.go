@@ -39,6 +39,36 @@ func UpdateBoardroomChange(db *sqlx.DB, change *models.BoardroomChange) error {
 	return nil
 }
 
+func InsertEntity(db *sqlx.DB, e *models.Entity) (int64, error) {
+	query := `
+		INSERT INTO entities_level1 (type, name, title, company, birth_year, gender, nationality, created_at) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(name, company, birth_year) DO UPDATE SET
+			title = excluded.title,
+			gender = excluded.gender,
+			nationality = excluded.nationality,
+			updated_at = CURRENT_TIMESTAMP
+		RETURNING id
+	`
+	var id int64
+	err := db.QueryRowx(
+		db.Rebind(query),
+		e.Type,
+		e.Name,
+		e.Title,
+		e.StockCode,
+		e.BirthYear,
+		e.Gender,
+		e.Nationality,
+		e.CreatedAt,
+	).Scan(&id)
+
+	if err != nil {
+		return 0, fmt.Errorf("failed to insert entity: %w", err)
+	}
+	return id, nil
+}
+
 func UpdateEntity(db *sqlx.DB, e *models.Entity) (int64, error) {
 	var (
 		conflictCols  string
