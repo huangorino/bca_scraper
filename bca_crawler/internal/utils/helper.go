@@ -90,7 +90,6 @@ func StripMarkdown(s string) string {
 }
 
 var atomicTitles = map[string]bool{
-	// Y* prefixes
 	"YABHG": true,
 	"YBHG":  true,
 	"YAB":   true,
@@ -100,13 +99,9 @@ var atomicTitles = map[string]bool{
 	"YM":    true,
 	"YB":    true,
 
-	// Roles
 	"SENATOR": true,
 
-	// Honorifics
 	"TUN":   true,
-	"TAN":   true,
-	"SRI":   true,
 	"DATO":  true,
 	"DATO'": true,
 	"DATUK": true,
@@ -120,12 +115,13 @@ var atomicTitles = map[string]bool{
 	"MR":    true,
 	"MISS":  true,
 	"MADAM": true,
-	"SERI":  true,
 }
 
-var allowedPairs = map[string]bool{
+var compoundTitles = map[string]bool{
 	"TAN SRI":    true,
+	"TAN SERI":   true,
 	"DATO' SRI":  true,
+	"DATO SERI":  true,
 	"DATUK SERI": true,
 }
 
@@ -137,17 +133,17 @@ func SplitTitle(fullName string) (title string, name string) {
 	i := 0
 
 	for i < len(tokens) {
-		// Try pair first
+		// Try compound titles first
 		if i+1 < len(tokens) {
 			pair := tokens[i] + " " + tokens[i+1]
-			if allowedPairs[pair] {
+			if compoundTitles[pair] {
 				consumed = append(consumed, pair)
 				i += 2
 				continue
 			}
 		}
 
-		// Single token
+		// Single-token titles
 		if atomicTitles[tokens[i]] {
 			consumed = append(consumed, tokens[i])
 			i++
@@ -162,16 +158,17 @@ func SplitTitle(fullName string) (title string, name string) {
 	return title, name
 }
 
-/*
-Normalization based on dataset
-*/
 func normalize(s string) string {
 	s = strings.TrimSpace(s)
 	s = strings.ToUpper(s)
 
+	// normalize unicode apostrophe
 	s = strings.ReplaceAll(s, "’", "'")
+
+	// remove dots (YABHG., DR., etc.)
 	s = strings.ReplaceAll(s, ".", "")
 
+	// collapse whitespace
 	s = strings.Join(strings.Fields(s), " ")
 	return s
 }
