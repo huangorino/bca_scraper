@@ -70,24 +70,10 @@ CREATE TABLE IF NOT EXISTS entities (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-DROP INDEX IF EXISTS uq_entities_company;
+--DROP INDEX IF EXISTS uq_entities_company;
+--CREATE UNIQUE INDEX uq_entities_company ON entities (stock_code) WHERE type = 'COMPANY';
 DROP INDEX IF EXISTS uq_entities_person;
-CREATE UNIQUE INDEX uq_entities_company ON entities (stock_code) WHERE type = 'COMPANY';
 CREATE UNIQUE INDEX uq_entities_person ON entities (name, birth_year) WHERE type = 'PERSON';
-
-
-CREATE TABLE IF NOT EXISTS entities_master (
-    id SERIAL PRIMARY KEY,
-    type TEXT NOT NULL,
-    name TEXT NOT NULL,
-    title TEXT,
-    company TEXT,
-    birth_year INTEGER,
-    gender TEXT,
-    nationality TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
 
 CREATE TABLE IF NOT EXISTS boardroom_changes (
