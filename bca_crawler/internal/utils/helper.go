@@ -50,27 +50,34 @@ func TrimAbbreviation(s string) (name string, title string) {
 
 	// Known abbreviation tokens (single words)
 	abbrTokens := map[string]struct{}{
-		"MR": {}, "MR.": {},
-		"MISS": {},
-		"MS":   {},
-		"MRS":  {},
-		"DR":   {}, "DR.": {},
-		"PROF": {}, "PROF.": {}, "PROFESSOR": {},
+		"BHG": {}, "BHG.": {},
 		"DATO": {}, "DATO'": {},
-		"DATUK":   {},
-		"DATIN":   {},
-		"TAN SRI": {}, "TAN SERI": {},
-		"SRI": {}, "SERI": {},
+		"DATIN": {},
+		"DATUK": {},
+		"DR":    {}, "DR.": {},
 		"PUAN": {}, "ENCIK": {}, "TUAN": {},
+		"MISS": {}, "MS": {}, "MRS": {},
+		"MR": {}, "MR.": {},
+		"PROF": {}, "PROF.": {}, "PROFESSOR": {},
 		"SENATOR": {},
-		"YB":      {}, "YB.": {}, "Y.B.": {}, "B.": {},
+		"SRI":     {}, "SERI": {},
+		"TAN SRI": {}, "TAN SERI": {},
 		"Y": {}, "Y.": {},
-		"YBHG": {}, "BHG": {}, "BHG.": {},
-		"YBM": {}, "YBM.": {}, "Y.B.M.": {},
+		"YB": {}, "YB.": {}, "Y.B.": {}, "B.": {},
+		"YBHG": {},
+		"YBM":  {}, "YBM.": {}, "Y.B.M.": {},
 		"YDH": {}, "YDH.": {}, "Y.D.H.": {}, "DH.": {},
 	}
 
 	words := strings.Split(s, " ")
+
+	// if "TAN SRI" or "TAN SERI" is found, join them
+	for i := range words {
+		if words[i] == "TAN" && (words[i+1] == "SRI" || words[i+1] == "SERI") {
+			words[i] = "TAN SRI"
+			words = append(words[:i+1], words[i+2:]...)
+		}
+	}
 
 	// Walk from right → left, building suffix
 	var suffix []string
