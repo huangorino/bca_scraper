@@ -230,7 +230,7 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 
 	// --- Person fields ---
 	personName := tidy(findValueByLabel(doc, "Name"))
-	// name, title := utils.TrimAbbreviation(personName)
+	title, name := utils.SplitTitle(personName)
 	ageStr := tidy(findValueByLabel(doc, "Age"))
 	age, _ := strconv.Atoi(ageStr)
 	birthYear := change.DateAnnounced.Year() - age
@@ -245,8 +245,8 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 
 	person := &models.Entity{
 		Type:        strings.ToUpper("person"),
-		Name:        strings.ToUpper(personName),
-		Title:       strings.ToUpper(""),
+		Name:        strings.ToUpper(name),
+		Title:       strings.ToUpper(title),
 		StockCode:   strings.ToUpper(stockCode),
 		BirthYear:   birthYear,
 		Gender:      genderCode,

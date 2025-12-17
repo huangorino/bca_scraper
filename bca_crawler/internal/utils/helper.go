@@ -1,7 +1,10 @@
 package utils
 
 import (
+	"fmt"
 	"os"
+	"regexp"
+	"sort"
 	"strings"
 	"time"
 )
@@ -37,68 +40,6 @@ func ParseDate(s string) *time.Time {
 		}
 	}
 	return nil
-}
-
-func TrimAbbreviation(s string) (name string, title string) {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return "", ""
-	}
-
-	// Normalize spacing
-	s = strings.Join(strings.Fields(s), " ")
-
-	// Known abbreviation tokens (single words)
-	abbrTokens := map[string]struct{}{
-		"TAN SRI": {}, "TAN SERI": {},
-		"BHG": {}, "BHG.": {},
-		"DATO": {}, "DATO'": {},
-		"DATIN": {},
-		"DATUK": {},
-		"DR":    {}, "DR.": {},
-		"PUAN": {}, "ENCIK": {}, "TUAN": {},
-		"MISS": {}, "MS": {}, "MRS": {},
-		"MR": {}, "MR.": {},
-		"PROF": {}, "PROF.": {}, "PROFESSOR": {},
-		"SENATOR": {},
-		"SRI":     {}, "SERI": {},
-		"Y": {}, "Y.": {},
-		"YB": {}, "YB.": {}, "Y.B.": {}, "B.": {},
-		"YBHG": {},
-		"YBM":  {}, "YBM.": {}, "Y.B.M.": {},
-		"YDH": {}, "YDH.": {}, "Y.D.H.": {}, "DH.": {},
-	}
-
-	for i := range abbrTokens {
-		if strings.Contains(s, i) {
-			words := strings.Split(s, " ")
-
-			// Walk from right → left, building suffix
-			var suffix []string
-			var names []string
-
-			for i := len(words) - 1; i >= 0; i-- {
-				abbr := words[i]
-				if strings.Contains(abbr, ".") || strings.Contains(abbr, "'") {
-					abbr = strings.ReplaceAll(abbr, ".", "")
-					abbr = strings.ReplaceAll(abbr, "'", "")
-				}
-
-				if _, ok := abbrTokens[abbr]; !ok {
-					names = append([]string{abbr}, names...)
-					continue
-				}
-
-				suffix = append([]string{abbr}, suffix...)
-			}
-
-			name = strings.TrimSpace(strings.Join(names, " "))
-			title = strings.TrimSpace(strings.Join(suffix, " "))
-			break
-		}
-	}
-
-	return name, title
 }
 
 // Truncate safely trims a string to maxLen characters (UTF-8 safe).
@@ -148,5 +89,87 @@ func StripMarkdown(s string) string {
 	if after, ok := strings.CutSuffix(s, "```"); ok {
 		s = after
 	}
+	return s
+}
+
+var canonicalTitles = []string{
+	"SENATOR DATO'",
+	"SENATOR DATUK",
+	"SENATOR",
+	"YABHG",
+	"YBHG",
+	"YAB",
+	"YBM",
+	"YTM",
+	"YAM",
+	"YM",
+	"YB",
+	"TUN",
+	"TAN SRI DATO'",
+	"TAN SRI",
+	"DATO' SRI",
+	"DATO'",
+	"DATO",
+	"DATUK SERI",
+	"DATUK",
+	"DATIN",
+	"PUAN",
+	"ENCIK",
+	"CIK",
+	"DR",
+	"IR",
+	"HAJI",
+	"MR",
+	"MISS",
+	"MADAM",
+}
+
+var titleRegex []*regexp.Regexp
+
+func init() {
+	// Sort by word count DESC, then length DESC
+	sort.SliceStable(canonicalTitles, func(i, j int) bool {
+		wi := len(strings.Fields(canonicalTitles[i]))
+		wj := len(strings.Fields(canonicalTitles[j]))
+		if wi != wj {
+			return wi > wj
+		}
+		return len(canonicalTitles[i]) > len(canonicalTitles[j])
+	})
+
+	for _, t := range canonicalTitles {
+		pattern := fmt.Sprintf(`^(%s)(\s+|$)`, regexp.QuoteMeta(t))
+		titleRegex = append(titleRegex, regexp.MustCompile(pattern))
+	}
+}
+
+func SplitTitle(fullName string) (title string, name string) {
+	n := normalize(fullName)
+
+	for _, re := range titleRegex {
+		if re.MatchString(n) {
+			m := re.FindStringSubmatch(n)
+			title = m[1]
+			name = strings.TrimSpace(n[len(m[0]):])
+			return title, name
+		}
+	}
+
+	return "", n
+}
+
+func normalize(s string) string {
+	s = strings.TrimSpace(s)
+	s = strings.ToUpper(s)
+
+	// normalize unicode apostrophe
+	s = strings.ReplaceAll(s, "’", "'")
+
+	// remove dots (YABHG., DR., etc.)
+	s = strings.ReplaceAll(s, ".", "")
+
+	// collapse whitespace
+	s = strings.Join(strings.Fields(s), " ")
+
 	return s
 }
