@@ -247,6 +247,7 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 		Type:        strings.ToUpper("person"),
 		Name:        strings.ToUpper(name),
 		Title:       strings.ToUpper(title),
+		StockCode:   strings.ToUpper(stockCode),
 		BirthYear:   birthYear,
 		Gender:      genderCode,
 		Nationality: strings.ToUpper(nationality),

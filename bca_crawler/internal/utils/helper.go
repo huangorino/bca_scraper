@@ -39,7 +39,7 @@ func ParseDate(s string) *time.Time {
 	return nil
 }
 
-func TrimAbbreviation(s string) (name string, abbr string) {
+func TrimAbbreviation(s string) (name string, title string) {
 	s = strings.TrimSpace(s)
 	if s == "" {
 		return "", ""
@@ -62,7 +62,6 @@ func TrimAbbreviation(s string) (name string, abbr string) {
 		"TAN SRI": {}, "TAN SERI": {},
 		"SRI": {}, "SERI": {},
 		"PUAN": {}, "ENCIK": {}, "TUAN": {},
-		"ABANG":   {},
 		"SENATOR": {},
 		"YB":      {}, "YB.": {}, "Y.B.": {}, "B.": {},
 		"Y": {}, "Y.": {},
@@ -78,18 +77,24 @@ func TrimAbbreviation(s string) (name string, abbr string) {
 	var names []string
 
 	for i := len(words) - 1; i >= 0; i-- {
-		if _, ok := abbrTokens[words[i]]; !ok {
-			names = append([]string{words[i]}, names...)
+		abbr := words[i]
+		if strings.Contains(abbr, ".") || strings.Contains(abbr, "'") {
+			abbr = strings.ReplaceAll(abbr, ".", "")
+			abbr = strings.ReplaceAll(abbr, "'", "")
+		}
+
+		if _, ok := abbrTokens[abbr]; !ok {
+			names = append([]string{abbr}, names...)
 			continue
 		}
 
-		suffix = append([]string{words[i]}, suffix...)
+		suffix = append([]string{abbr}, suffix...)
 	}
 
 	name = strings.TrimSpace(strings.Join(names, " "))
-	abbr = strings.TrimSpace(strings.Join(suffix, " "))
+	title = strings.TrimSpace(strings.Join(suffix, " "))
 
-	return name, abbr
+	return name, title
 }
 
 // Truncate safely trims a string to maxLen characters (UTF-8 safe).

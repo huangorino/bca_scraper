@@ -50,17 +50,17 @@ func main() {
 		ann := data[i]
 		annID := strconv.Itoa(ann.AnnID)
 
-		change, company, person, background, err := services.ParseBoardroomChangeHTML(ann)
+		change, _, person, background, err := services.ParseBoardroomChangeHTML(ann)
 		if err != nil {
 			log.Warnf("⚠️ Parse failed for ann_id %s: %v", annID, err)
 			continue
 		}
 
-		companyID, err := db.UpdateEntity(database, company)
-		if err != nil {
-			log.Errorf("❌ Company update failed for ann_id %s: %v", annID, err)
-			continue
-		}
+		// companyID, err := db.UpdateEntity(database, company)
+		// if err != nil {
+		// 	log.Errorf("❌ Company update failed for ann_id %s: %v", annID, err)
+		// 	continue
+		// }
 
 		personID, err := db.UpdateEntity(database, person)
 		if err != nil {
@@ -68,7 +68,7 @@ func main() {
 			continue
 		}
 
-		change.CompanyID = int(companyID)
+		// change.CompanyID = int(companyID)
 		change.PersonID = int(personID)
 
 		if err = db.UpdateBackground(database, personID, background); err != nil {
