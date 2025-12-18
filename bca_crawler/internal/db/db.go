@@ -4,65 +4,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"time"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	_ "modernc.org/sqlite"
 
 	"bca_crawler/internal/models"
 )
-
-// SaveAnnouncement inserts or updates a full announcement
-func SaveAnnouncement(db *sqlx.DB, a *models.Announcement) error {
-	now := time.Now().UTC()
-
-	attachmentsJSON, err := json.Marshal(a.Attachments)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
-	INSERT INTO announcements(
-		ann_id, title, link, company_name, stock_name, date_posted, category, ref_number, content, attachments)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-	ON CONFLICT(ann_id)
-	DO UPDATE SET
-		title = EXCLUDED.title,
-		link = EXCLUDED.link,
-		company_name = EXCLUDED.company_name,
-		stock_name = EXCLUDED.stock_name,
-		category = EXCLUDED.category,
-		ref_number = EXCLUDED.ref_number,
-		content = EXCLUDED.content,
-		attachments = EXCLUDED.attachments;`,
-		a.AnnID, a.Title, a.Link, a.CompanyName, a.StockName, now, a.Category, a.RefNumber, a.Content, attachmentsJSON)
-
-	return err
-}
-
-func UpdateAnnouncement(db *sqlx.DB, a *models.Announcement) error {
-	attachmentsJSON, err := json.Marshal(a.Attachments)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
-	INSERT INTO announcements (
-		ann_id, company_name, stock_name, date_posted, category, ref_number, attachments, content
-	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-	ON CONFLICT(ann_id)
-	DO UPDATE SET
-		company_name = EXCLUDED.company_name,
-		stock_name = EXCLUDED.stock_name,
-		date_posted = EXCLUDED.date_posted,
-		category = EXCLUDED.category,
-		ref_number = EXCLUDED.ref_number,
-		attachments = EXCLUDED.attachments,
-		content = EXCLUDED.content;`,
-		a.AnnID, a.CompanyName, a.StockName, a.DatePosted, a.Category, a.RefNumber, attachmentsJSON, a.Content)
-	return err
-}
 
 func FetchMissingAnnID(db *sqlx.DB) ([]int64, error) {
 	rows, err := db.Query(`
@@ -191,4 +140,13 @@ func ConvertAnnouncementDBToAnnouncement(a models.AnnouncementDB) (*models.Annou
 		Content:     a.Content.String,
 		Attachments: attachments,
 	}, nil
+}
+
+func GetSCID(db *sqlx.DB, name string, entityType string) (uuid.UUID, error) {
+	var scID uuid.UUID
+	err := db.QueryRow(`SELECT sc_id FROM entities_master WHERE name = $1 AND type = $2`, name, entityType).Scan(&scID)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("query sc_id: %w", err)
+	}
+	return scID, nil
 }

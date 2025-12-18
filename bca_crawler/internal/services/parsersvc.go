@@ -169,10 +169,10 @@ func extractAnnouncementInfoHTML(html string) (string, error) {
 	return "", fmt.Errorf("announcement info div not closed properly")
 }
 
-func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange, *models.Entity, *models.Entity, *models.Background, error) {
+func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange, error) {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(ann.Content))
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("[Error] parse HTML: %w", err)
+		return nil, fmt.Errorf("[Error] parse HTML: %w", err)
 	}
 
 	// detect if it's old-style Bursa HTML (pre-2015)
@@ -183,7 +183,6 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 	// --- Boardroom change core fields ---
 	change := &models.BoardroomChange{
 		AnnID:         ann.AnnID,
-		Category:      tidy(findValueByLabel(doc, "Category")),
 		DateAnnounced: utils.ParseDate(findValueByLabel(doc, "Date Announced")),
 		DateOfChange:  utils.ParseDate(findValueByLabel(doc, "Date of change")),
 		Directorate:   tidy(findValueByLabel(doc, "Directorate")),
@@ -193,6 +192,38 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 	if change.DateAnnounced == nil {
 		change.DateAnnounced = change.DateOfChange
 	}
+
+	// --- Company fields ---
+	companyName := tidy(findValueByLabel(doc, "Company Name"))
+	if companyName == "" {
+		companyName = tidy(doc.Find("td.company_name").First().Text())
+	}
+	stockCode := tidy(findValueByLabel(doc, "Stock Name"))
+	if stockCode == "" {
+		stockCode = tidy(findValueByLabel(doc, "Stock Code"))
+	}
+
+	change.CompanyName = strings.ToUpper(companyName)
+	change.StockCode = strings.ToUpper(stockCode)
+
+	// --- Person fields ---
+	personName := tidy(findValueByLabel(doc, "Name"))
+	title, name := utils.SplitTitle(personName)
+	ageStr := tidy(findValueByLabel(doc, "Age"))
+	age, _ := strconv.Atoi(ageStr)
+	birthYear := change.DateAnnounced.Year() - age
+	gender := tidy(findValueByLabel(doc, "Gender"))
+	genderCode := ""
+	if len(gender) > 0 {
+		genderCode = strings.ToUpper(gender[:1])
+	}
+	nationality := tidy(findValueByLabel(doc, "Nationality"))
+
+	change.PersonName = strings.ToUpper(name)
+	change.PersonTitle = strings.ToUpper(title)
+	change.PersonBirthYear = birthYear
+	change.PersonGender = genderCode
+	change.PersonNationality = strings.ToUpper(nationality)
 
 	change.Designation = tidy(findValueByLabel(doc, "New Position"))
 	change.PreviousPosition = tidy(findValueByLabel(doc, "Previous Position"))
@@ -209,49 +240,6 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 	if change.Remarks == "" {
 		// try remarks from InputTable2
 		change.Remarks = tidy(doc.Find("table.InputTable2 td.FootNote").Text())
-	}
-
-	// --- Company fields ---
-	companyName := tidy(findValueByLabel(doc, "Company Name"))
-	if companyName == "" {
-		companyName = tidy(doc.Find("td.company_name").First().Text())
-	}
-	stockCode := tidy(findValueByLabel(doc, "Stock Name"))
-	if stockCode == "" {
-		stockCode = tidy(findValueByLabel(doc, "Stock Code"))
-	}
-
-	company := &models.Entity{
-		Type:      strings.ToUpper("company"),
-		Name:      strings.ToUpper(companyName),
-		StockCode: strings.ToUpper(stockCode),
-		CreatedAt: safeTimeValue(change.DateAnnounced),
-	}
-
-	// --- Person fields ---
-	personName := tidy(findValueByLabel(doc, "Name"))
-	title, name := utils.SplitTitle(personName)
-	ageStr := tidy(findValueByLabel(doc, "Age"))
-	age, _ := strconv.Atoi(ageStr)
-	birthYear := change.DateAnnounced.Year() - age
-	gender := tidy(findValueByLabel(doc, "Gender"))
-	nationality := tidy(findValueByLabel(doc, "Nationality"))
-
-	// Extract first character of gender, safely
-	genderCode := ""
-	if len(gender) > 0 {
-		genderCode = strings.ToUpper(gender[:1])
-	}
-
-	person := &models.Entity{
-		Type:        strings.ToUpper("person"),
-		Name:        strings.ToUpper(name),
-		Title:       strings.ToUpper(title),
-		StockCode:   strings.ToUpper(stockCode),
-		BirthYear:   birthYear,
-		Gender:      genderCode,
-		Nationality: strings.ToUpper(nationality),
-		CreatedAt:   safeTimeValue(change.DateAnnounced),
 	}
 
 	background := &models.Background{
@@ -277,7 +265,9 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 		background.Qualification = extractQualifications(doc)
 	}
 
-	return change, company, person, background, nil
+	change.Background = *background
+
+	return change, nil
 }
 
 func findValueByLabel(doc *goquery.Document, label string) string {

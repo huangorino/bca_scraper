@@ -57,48 +57,40 @@ CREATE INDEX IF NOT EXISTS idx_daily_stock_prices_stock_code ON daily_stock_pric
 CREATE INDEX IF NOT EXISTS idx_daily_stock_prices_date ON daily_stock_prices(date);
 
 
+CREATE TABLE IF NOT EXISTS entities_master (
+    id SERIAL PRIMARY KEY,
+    sc_id UUID,
+    type TEXT NOT NULL,
+    name TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_entities_master_sc_id ON entities_master(sc_id);
+
 CREATE TABLE IF NOT EXISTS entities (
     id SERIAL PRIMARY KEY,
-    type TEXT NOT NULL,
+    sc_id UUID,
+    prefix TEXT,
     name TEXT NOT NULL,
     title TEXT,
-    stock_code TEXT,
     birth_year INTEGER,
     gender TEXT,
     nationality TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-DROP INDEX IF EXISTS uq_entities_company;
-DROP INDEX IF EXISTS uq_entities_person;
-CREATE UNIQUE INDEX uq_entities_company ON entities (type, name, stock_code) WHERE type = 'COMPANY';
-CREATE UNIQUE INDEX uq_entities_person ON entities (type, name, birth_year) WHERE type = 'PERSON';
-
-
-CREATE TABLE IF NOT EXISTS entities_level1 (
-    id SERIAL PRIMARY KEY,
-    type TEXT NOT NULL,
-    name TEXT NOT NULL,
-    title TEXT,
-    company TEXT,
-    birth_year INTEGER,
-    gender TEXT,
-    nationality TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-DROP INDEX IF EXISTS uq_entities_level1_person;
-CREATE UNIQUE INDEX uq_entities_level1_person ON entities_level1 (name, company, birth_year);
-
+CREATE UNIQUE INDEX IF NOT EXISTS idx_entities_sc_id ON entities(sc_id);
 
 CREATE TABLE IF NOT EXISTS boardroom_changes (
     id SERIAL PRIMARY KEY,
-    company_id INTEGER REFERENCES entities(id),
-    person_id INTEGER REFERENCES entities(id),
     ann_id INTEGER UNIQUE,
-    category TEXT,
+    company_name TEXT,
+    stock_code TEXT,
+    person_name TEXT,
+    person_title TEXT,
+    person_birth_year INTEGER,
+    person_gender TEXT,
+    person_nationality TEXT,
     date_announced DATE,
     date_of_change DATE,
     designation TEXT,
@@ -111,7 +103,7 @@ CREATE TABLE IF NOT EXISTS boardroom_changes (
 
 CREATE TABLE IF NOT EXISTS backgrounds (
     id SERIAL PRIMARY KEY,
-    entity_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+    sc_id UUID NOT NULL REFERENCES entities_master(sc_id) ON DELETE CASCADE,
     qualification TEXT,
     working_experience TEXT,
     directorships TEXT,
@@ -119,9 +111,8 @@ CREATE TABLE IF NOT EXISTS backgrounds (
     conflict_of_interest TEXT,
     interest_in_securities TEXT
 );
+CREATE UNIQUE INDEX IF NOT EXISTS idx_backgrounds_sc_id ON backgrounds(sc_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_backgrounds_entity_id
-ON backgrounds(entity_id);
 `
 
 // DriverType represents supported database drivers
