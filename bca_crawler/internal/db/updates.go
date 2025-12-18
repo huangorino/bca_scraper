@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 
 	"bca_crawler/internal/models"
@@ -101,57 +100,42 @@ func UpdateBoardroomChange(db *sqlx.DB, change *models.BoardroomChange) error {
 	return nil
 }
 
-func InsertEntityMaster(db *sqlx.DB, e *models.EntityMaster) error {
+func InsertEntityMaster(db *sqlx.DB, e *models.EntityMaster) (int, error) {
 	query := `
 		INSERT INTO entities_master (
-			sc_id, type, name,
+			type, name,
 			created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?)
-		ON CONFLICT(sc_id) DO UPDATE SET
-			type = excluded.type,
-			name = excluded.name,
-			updated_at = CURRENT_TIMESTAMP
+		) VALUES (?, ?, ?, ?)
+		RETURNING sc_id
 	`
-	_, err := db.Exec(
+	var scID int
+	err := db.QueryRowx(
 		db.Rebind(query),
-		e.ScID,
 		e.Type,
 		e.Name,
 		e.CreatedAt,
 		e.UpdatedAt,
-	)
+	).Scan(&scID)
 	if err != nil {
-		return fmt.Errorf("failed to insert entity master: %w", err)
+		return 0, fmt.Errorf("failed to insert entity master: %w", err)
 	}
-	return nil
+	return scID, nil
 }
 
-func UpdateEntity(db *sqlx.DB, e *models.Entity) error {
+func InsertEntity(db *sqlx.DB, e *models.Entity) error {
 	query := `
 		INSERT INTO entities (
-			sc_id, prefix, name,
-			title, birth_year, gender,
-			nationality, created_at
+			sc_id, prefix, value,
+			created_at
 		)
-		VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?
-		)
-		ON CONFLICT (sc_id) DO UPDATE SET
-			title       = EXCLUDED.title,
-			gender      = EXCLUDED.gender,
-			nationality = EXCLUDED.nationality,
-			updated_at  = CURRENT_TIMESTAMP
+		VALUES (?, ?, ?, ?)
 	`
 
 	_, err := db.Exec(
 		db.Rebind(query),
 		e.ScID,
 		e.Prefix,
-		e.Name,
-		e.Title,
-		e.BirthYear,
-		e.Gender,
-		e.Nationality,
+		e.Value,
 		e.CreatedAt,
 	)
 
@@ -162,7 +146,7 @@ func UpdateEntity(db *sqlx.DB, e *models.Entity) error {
 	return nil
 }
 
-func UpdateBackground(db *sqlx.DB, personID uuid.UUID, bg *models.Background) error {
+func UpdateBackground(db *sqlx.DB, personID int, bg *models.Background) error {
 	queryInsert := `
 		INSERT INTO backgrounds (
 			sc_id, qualification, working_experience,

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	_ "modernc.org/sqlite"
@@ -142,11 +141,11 @@ func ConvertAnnouncementDBToAnnouncement(a models.AnnouncementDB) (*models.Annou
 	}, nil
 }
 
-func GetSCID(db *sqlx.DB, name string, entityType string) (uuid.UUID, error) {
-	var scID uuid.UUID
+func GetSCID(db *sqlx.DB, name string, entityType string) (int, error) {
+	var scID int
 	err := db.QueryRow(`SELECT sc_id FROM entities_master WHERE name = $1 AND type = $2`, name, entityType).Scan(&scID)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("query sc_id: %w", err)
+		return 0, fmt.Errorf("query sc_id: %w", err)
 	}
 	return scID, nil
 }

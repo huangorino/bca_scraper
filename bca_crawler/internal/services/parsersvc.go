@@ -208,7 +208,7 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 
 	// --- Person fields ---
 	personName := tidy(findValueByLabel(doc, "Name"))
-	title, name := utils.SplitTitle(personName)
+	// title, name := utils.SplitTitle(personName)
 	ageStr := tidy(findValueByLabel(doc, "Age"))
 	age, _ := strconv.Atoi(ageStr)
 	birthYear := change.DateAnnounced.Year() - age
@@ -219,8 +219,7 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 	}
 	nationality := tidy(findValueByLabel(doc, "Nationality"))
 
-	change.PersonName = strings.ToUpper(name)
-	change.PersonTitle = strings.ToUpper(title)
+	change.PersonName = strings.ToUpper(personName)
 	change.PersonBirthYear = birthYear
 	change.PersonGender = genderCode
 	change.PersonNationality = strings.ToUpper(nationality)
