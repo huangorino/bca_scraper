@@ -105,7 +105,7 @@ func InsertEntityMaster(db *sqlx.DB, e *models.EntityMaster) (int, error) {
 		INSERT INTO entities_master (
 			type, name,
 			created_at, updated_at
-		) VALUES (?, ?, ?, ?)
+		) VALUES (?, ?, ?, TIMESTAMPTZ 'now')
 		RETURNING sc_id
 	`
 	var scID int
@@ -114,7 +114,6 @@ func InsertEntityMaster(db *sqlx.DB, e *models.EntityMaster) (int, error) {
 		e.Type,
 		e.Name,
 		e.CreatedAt,
-		e.UpdatedAt,
 	).Scan(&scID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert entity master: %w", err)
@@ -126,9 +125,9 @@ func InsertEntity(db *sqlx.DB, e *models.Entity) error {
 	query := `
 		INSERT INTO entities (
 			sc_id, prefix, value,
-			created_at
+			created_at, updated_at
 		)
-		VALUES (?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, TIMESTAMPTZ 'now')
 	`
 
 	_, err := db.Exec(
