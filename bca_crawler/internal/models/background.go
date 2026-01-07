@@ -2,7 +2,7 @@ package models
 
 type Background struct {
 	ID                   int    `json:"id,omitempty"`
-	ScID                 int    `json:"sc_id,omitempty"`
+	PermID               int    `json:"perm_id,omitempty"`
 	Qualification        string `json:"qualification,omitempty"`
 	WorkingExperience    string `json:"working_experience,omitempty"`
 	Directorships        string `json:"directorships,omitempty"`

@@ -100,58 +100,50 @@ func UpdateBoardroomChange(db *sqlx.DB, change *models.BoardroomChange) error {
 	return nil
 }
 
-func InsertEntityMaster(db *sqlx.DB, e *models.EntityMaster) (int, error) {
+func InsertEntity(db *sqlx.DB, e *models.Entity) (int, error) {
 	query := `
-		INSERT INTO entities_master (
-			type, name,
-			created_at, updated_at
-		) VALUES (?, ?, ?, TIMESTAMPTZ 'now')
-		RETURNING sc_id
+		INSERT INTO entities (
+			display_name, name, salutation, stock_code,
+			birth_year, gender, nationality,
+			created_at
+		)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		RETURNING secondary_perm_id
 	`
+
 	var scID int
 	err := db.QueryRowx(
 		db.Rebind(query),
-		e.Type,
+		e.DisplayName,
 		e.Name,
+		e.Salutation,
+		e.StockCode,
+		e.BirthYear,
+		e.Gender,
+		e.Nationality,
 		e.CreatedAt,
 	).Scan(&scID)
 	if err != nil {
-		return 0, fmt.Errorf("failed to insert entity master: %w", err)
+		return 0, fmt.Errorf("failed to insert entity: %w", err)
 	}
-	return scID, nil
-}
 
-func InsertEntity(db *sqlx.DB, e *models.Entity) error {
-	query := `
-		INSERT INTO entities (
-			sc_id, prefix, value,
-			created_at, updated_at
-		)
-		VALUES (?, ?, ?, ?, TIMESTAMPTZ 'now')
-	`
-
-	_, err := db.Exec(
-		db.Rebind(query),
-		e.ScID,
-		e.Prefix,
-		e.Value,
-		e.CreatedAt,
-	)
-
+	// Update primary_perm_id to be the same as secondary_perm_id
+	updateQuery := `UPDATE entities SET primary_perm_id = ?, updated_at = CURRENT_TIMESTAMP WHERE secondary_perm_id = ?`
+	_, err = db.Exec(db.Rebind(updateQuery), scID, scID)
 	if err != nil {
-		return fmt.Errorf("failed to upsert entity: %w", err)
+		return 0, fmt.Errorf("failed to update primary_perm_id: %w", err)
 	}
 
-	return nil
+	return scID, nil
 }
 
 func UpdateBackground(db *sqlx.DB, personID int, bg *models.Background) error {
 	queryInsert := `
 		INSERT INTO backgrounds (
-			sc_id, qualification, working_experience,
+			perm_id, qualification, working_experience,
 			directorships, family_relationship, conflict_of_interest, interest_in_securities) 
 		VALUES (?, ?, ?, ?, ?, ?, ?)
-		ON CONFLICT(sc_id) DO UPDATE SET
+		ON CONFLICT(perm_id) DO UPDATE SET
 			qualification = excluded.qualification,
 			working_experience = excluded.working_experience,
 			directorships = excluded.directorships,

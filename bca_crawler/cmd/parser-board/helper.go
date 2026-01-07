@@ -4,82 +4,51 @@ import (
 	"bca_crawler/internal/db"
 	"bca_crawler/internal/models"
 	"bca_crawler/internal/utils"
-	"database/sql"
-	"errors"
 	"fmt"
-	"strconv"
 )
 
 func GetOrCreateEntity(change models.BoardroomChange) error {
-	var entities []models.Entity
-
-	// Company
-	companyID, err := db.GetSCID(database, change.CompanyName, "COMPANY")
-	if errors.Is(err, sql.ErrNoRows) {
-		companyID, err = db.InsertEntityMaster(database, &models.EntityMaster{
-			Type:      "COMPANY",
-			Name:      change.CompanyName,
-			CreatedAt: *change.DateAnnounced,
-		})
-		if err != nil {
-			return fmt.Errorf("InsertEntityMaster failed: %w", err)
-		}
-
-		entities = append(entities, models.Entity{
-			ScID:      companyID,
-			Prefix:    "STOCK CODE",
-			Value:     change.StockCode,
-			CreatedAt: *change.DateAnnounced,
-		})
-	}
-	if err != nil {
-		return fmt.Errorf("Get Company SCID failed: %w", err)
-	}
-
-	// Person
 	title, name := utils.SplitTitle(change.PersonName)
-	personID, err := db.GetSCID(database, name, "PERSON")
-	if errors.Is(err, sql.ErrNoRows) {
-		personID, err = db.InsertEntityMaster(database, &models.EntityMaster{
-			Type:      "PERSON",
-			Name:      name,
-			CreatedAt: *change.DateAnnounced,
+
+	// Step 1: Check if db contains records with the name/display_name
+	entities, err := db.FindEntitiesByNameOrDisplay(database, name, change.PersonName)
+	if err != nil {
+		return fmt.Errorf("FindEntitiesByNameOrDisplay failed: %w", err)
+	}
+
+	var permID int
+	if len(entities) > 0 {
+		// Step 2 & 3 & 4: If records found (1 or more), update all their primary_perm_id
+		// to be the same as the first record's secondary_perm_id
+		firstSecondaryPermID := entities[0].SecondaryPermID
+
+		err = db.UpdatePrimaryPermID(database, name, change.PersonName, firstSecondaryPermID)
+		if err != nil {
+			return fmt.Errorf("UpdatePrimaryPermID failed: %w", err)
+		}
+
+		permID = firstSecondaryPermID
+	} else {
+		// Step 5: If no records found, insert a new record
+		personID, err := db.InsertEntity(database, &models.Entity{
+			DisplayName: change.PersonName,
+			Name:        &name,
+			Salutation:  &title,
+			StockCode:   &change.StockCode,
+			BirthYear:   &change.PersonBirthYear,
+			Gender:      &change.PersonGender,
+			Nationality: &change.PersonNationality,
+			CreatedAt:   *change.DateAnnounced,
 		})
 		if err != nil {
-			return fmt.Errorf("InsertEntityMaster failed: %w", err)
-		}
-
-		data := []struct {
-			prefix string
-			value  string
-		}{
-			{"TITLE", title},
-			{"BIRTH YEAR", strconv.Itoa(change.PersonBirthYear)},
-			{"GENDER", change.PersonGender},
-			{"NATIONALITY", change.PersonNationality},
-		}
-
-		for _, d := range data {
-			entities = append(entities, models.Entity{
-				ScID:      personID,
-				Prefix:    d.prefix,
-				Value:     d.value,
-				CreatedAt: *change.DateAnnounced,
-			})
-		}
-	}
-	if err != nil {
-		return fmt.Errorf("Get PersonSCID failed: %w", err)
-	}
-
-	for _, entity := range entities {
-		if err = db.InsertEntity(database, &entity); err != nil {
 			return fmt.Errorf("InsertEntity failed: %w", err)
 		}
+
+		permID = personID
 	}
 
-	// Qualifications
-	if err = db.UpdateBackground(database, personID, &change.Background); err != nil {
+	// Update background information
+	if err = db.UpdateBackground(database, permID, &change.Background); err != nil {
 		return fmt.Errorf("Qualifications update failed: %w", err)
 	}
 
