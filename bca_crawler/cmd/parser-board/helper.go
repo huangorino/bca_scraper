@@ -34,7 +34,7 @@ func GetOrCreateEntity(change models.BoardroomChange) error {
 	for i := range entities {
 		entity := entities[i]
 
-		if entity.StockCode != &change.StockCode {
+		if *entity.StockCode != change.StockCode {
 			toInsert = true
 		}
 	}
