@@ -17,20 +17,30 @@ func GetOrCreateEntity(change models.BoardroomChange) error {
 	}
 
 	var permID int
+	var toInsert bool
 	if len(entities) > 0 {
 		// Step 2 & 3 & 4: If records found (1 or more), update all their primary_perm_id
 		// to be the same as the first record's secondary_perm_id
-		firstSecondaryPermID := entities[0].SecondaryPermID
+		permID = entities[0].SecondaryPermID
 
-		err = db.UpdatePrimaryPermID(database, name, change.PersonName, firstSecondaryPermID)
+		err = db.UpdatePrimaryPermID(database, name, change.PersonName, permID)
 		if err != nil {
 			return fmt.Errorf("UpdatePrimaryPermID failed: %w", err)
 		}
-
-		permID = firstSecondaryPermID
 	} else {
-		// Step 5: If no records found, insert a new record
-		personID, err := db.InsertEntity(database, &models.Entity{
+		toInsert = true
+	}
+
+	for i := range entities {
+		entity := entities[i]
+
+		if entity.StockCode != &change.StockCode {
+			toInsert = true
+		}
+	}
+
+	if toInsert {
+		permID, err = db.InsertEntity(database, &models.Entity{
 			DisplayName: change.PersonName,
 			Name:        &name,
 			Salutation:  &title,
@@ -43,8 +53,6 @@ func GetOrCreateEntity(change models.BoardroomChange) error {
 		if err != nil {
 			return fmt.Errorf("InsertEntity failed: %w", err)
 		}
-
-		permID = personID
 	}
 
 	// Update background information
