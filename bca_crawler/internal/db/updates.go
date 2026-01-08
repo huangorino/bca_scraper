@@ -128,11 +128,11 @@ func InsertEntity(db *sqlx.DB, e *models.Entity) (int, error) {
 	}
 
 	// Update primary_perm_id to be the same as secondary_perm_id
-	updateQuery := `UPDATE entities SET primary_perm_id = ?, updated_at = CURRENT_TIMESTAMP WHERE secondary_perm_id = ?`
-	_, err = db.Exec(db.Rebind(updateQuery), scID, scID)
-	if err != nil {
-		return 0, fmt.Errorf("failed to update primary_perm_id: %w", err)
-	}
+	// updateQuery := `UPDATE entities SET primary_perm_id = ?, updated_at = CURRENT_TIMESTAMP WHERE secondary_perm_id = ?`
+	// _, err = db.Exec(db.Rebind(updateQuery), scID, scID)
+	// if err != nil {
+	// 	return 0, fmt.Errorf("failed to update primary_perm_id: %w", err)
+	// }
 
 	return scID, nil
 }

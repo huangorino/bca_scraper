@@ -19,6 +19,14 @@ func GetOrCreateEntity(change models.BoardroomChange) error {
 	var permID int
 	toInsert := false
 	if len(entities) > 0 {
+		for i := range entities {
+			entity := entities[i]
+
+			if *entity.StockCode != change.StockCode {
+				toInsert = true
+			}
+		}
+
 		// Step 2 & 3 & 4: If records found (1 or more), update all their primary_perm_id
 		// to be the same as the first record's secondary_perm_id
 		permID = entities[0].SecondaryPermID
@@ -29,14 +37,6 @@ func GetOrCreateEntity(change models.BoardroomChange) error {
 		}
 	} else {
 		toInsert = true
-	}
-
-	for i := range entities {
-		entity := entities[i]
-
-		if *entity.StockCode != change.StockCode {
-			toInsert = true
-		}
 	}
 
 	if toInsert {
