@@ -19,12 +19,20 @@ func GetOrCreateEntity(change models.BoardroomChange) error {
 	var permID int
 	toInsert := false
 	if len(entities) > 0 {
+		// Check if the stock code exists in any of the entities
+		stockCodeFound := false
 		for i := range entities {
 			entity := entities[i]
 
-			if *entity.StockCode != change.StockCode {
-				toInsert = true
+			if entity.StockCode != nil && *entity.StockCode == change.StockCode {
+				stockCodeFound = true
+				break
 			}
+		}
+
+		// Only insert if the stock code is not found in any entity
+		if !stockCodeFound {
+			toInsert = true
 		}
 
 		// Step 2 & 3 & 4: If records found (1 or more), update all their primary_perm_id
