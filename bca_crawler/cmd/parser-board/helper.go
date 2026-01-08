@@ -17,7 +17,7 @@ func GetOrCreateEntity(change models.BoardroomChange) error {
 	}
 
 	var permID int
-	var toInsert bool
+	toInsert := false
 	if len(entities) > 0 {
 		// Step 2 & 3 & 4: If records found (1 or more), update all their primary_perm_id
 		// to be the same as the first record's secondary_perm_id
