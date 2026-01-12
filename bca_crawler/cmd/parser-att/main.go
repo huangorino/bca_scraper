@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+// parser for announcement attachments download
+
 func main() {
 	// -------------------------------------------------------------------------
 	// 1️⃣ Load Configuration

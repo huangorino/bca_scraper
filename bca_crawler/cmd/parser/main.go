@@ -9,6 +9,8 @@ import (
 	"bca_crawler/internal/utils"
 )
 
+// main parser for bursa annoucements
+
 func main() {
 	// -------------------------------------------------------------------------
 	// 1️⃣ Load Configuration

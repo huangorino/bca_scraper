@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+// crawler for market statistics
+
 func main() {
 	// Load configuration
 	cfg, err := utils.LoadCfg()

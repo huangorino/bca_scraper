@@ -11,6 +11,8 @@ import (
 	"bca_crawler/internal/utils"
 )
 
+// main crawler for announcements
+
 func main() {
 	// Load configuration
 	cfg, err := utils.LoadCfg()

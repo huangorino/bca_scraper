@@ -11,6 +11,8 @@ import (
 	"bca_crawler/internal/utils"
 )
 
+// crawler for missing announcement IDs
+
 func main() {
 	retryTriggers := []string{
 		"Web server is returning an unknown error",

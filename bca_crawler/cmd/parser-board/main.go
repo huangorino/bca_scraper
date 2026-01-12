@@ -11,6 +11,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// parser for change in boardroom announcements
+
 var database *sqlx.DB
 
 func main() {
