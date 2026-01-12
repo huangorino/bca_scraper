@@ -88,9 +88,9 @@ func FetchAnnouncementsByCategory(db *sqlx.DB, category string) ([]*models.Annou
 	var args []interface{}
 	if category != "" {
 		if category == "attachments" {
-			sqlQuery += " WHERE attachments != 'null' AND date_posted >= CURRENT_DATE - INTERVAL '7 days'"
+			sqlQuery += " WHERE attachments != 'null'"
 		} else {
-			sqlQuery += " WHERE category = $1 AND date_posted >= CURRENT_DATE - INTERVAL '7 days'"
+			sqlQuery += " WHERE category = $1"
 			args = append(args, category)
 		}
 	}
