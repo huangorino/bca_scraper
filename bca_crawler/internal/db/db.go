@@ -142,14 +142,14 @@ func ConvertAnnouncementDBToAnnouncement(a models.AnnouncementDB) (*models.Annou
 }
 
 // FindEntitiesByNameOrDisplay finds all entities matching the given name or display_name
-func FindEntitiesByNameOrDisplay(db *sqlx.DB, name string, displayName string) ([]models.Entity, error) {
+func FindEntitiesByNameOrDisplay(db *sqlx.DB, name string, displayName string, birthYear int) ([]models.Entity, error) {
 	var entities []models.Entity
 	err := db.Select(&entities, `
 		SELECT id, primary_perm_id, secondary_perm_id, display_name, name, salutation, 
 		       stock_code, birth_year, gender, nationality, created_at, updated_at
 		FROM entities
-		WHERE name = $1 OR display_name = $2
-		ORDER BY secondary_perm_id ASC`, name, displayName)
+		WHERE (name = $1 OR display_name = $2) AND birth_year = $3
+		ORDER BY secondary_perm_id ASC`, name, displayName, birthYear)
 	if err != nil {
 		return nil, fmt.Errorf("query entities: %w", err)
 	}
@@ -157,11 +157,11 @@ func FindEntitiesByNameOrDisplay(db *sqlx.DB, name string, displayName string) (
 }
 
 // UpdatePrimaryPermID updates all entities matching name or display_name to set their primary_perm_id
-func UpdatePrimaryPermID(db *sqlx.DB, name string, displayName string, primaryPermID int) error {
+func UpdatePrimaryPermID(db *sqlx.DB, name string, displayName string, birthYear int, primaryPermID int) error {
 	_, err := db.Exec(`
 		UPDATE entities
 		SET primary_perm_id = $1, updated_at = CURRENT_TIMESTAMP
-		WHERE name = $2 OR display_name = $3`, primaryPermID, name, displayName)
+		WHERE (name = $2 OR display_name = $3) AND birth_year = $4`, primaryPermID, name, displayName, birthYear)
 	if err != nil {
 		return fmt.Errorf("update primary_perm_id: %w", err)
 	}

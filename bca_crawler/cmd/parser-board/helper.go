@@ -11,7 +11,7 @@ func GetOrCreateEntity(change models.BoardroomChange) error {
 	title, name := utils.SplitTitle(change.PersonName)
 
 	// Step 1: Check if db contains records with the name/display_name
-	entities, err := db.FindEntitiesByNameOrDisplay(database, name, change.PersonName)
+	entities, err := db.FindEntitiesByNameOrDisplay(database, name, change.PersonName, change.PersonBirthYear)
 	if err != nil {
 		return fmt.Errorf("FindEntitiesByNameOrDisplay failed: %w", err)
 	}
@@ -39,7 +39,7 @@ func GetOrCreateEntity(change models.BoardroomChange) error {
 		// to be the same as the first record's secondary_perm_id
 		permID = entities[0].SecondaryPermID
 
-		err = db.UpdatePrimaryPermID(database, name, change.PersonName, permID)
+		err = db.UpdatePrimaryPermID(database, name, change.PersonName, change.PersonBirthYear, permID)
 		if err != nil {
 			return fmt.Errorf("UpdatePrimaryPermID failed: %w", err)
 		}

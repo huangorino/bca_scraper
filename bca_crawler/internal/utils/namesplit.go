@@ -26,7 +26,6 @@ var atomicTitles = map[string]bool{
 	"CIK":   true,
 	"DR":    true,
 	"IR":    true,
-	"HAJI":  true,
 	"MR":    true,
 	"MISS":  true,
 	"MADAM": true,
@@ -86,7 +85,6 @@ func normalize(s string) string {
 	s = strings.ReplaceAll(s, ".", "")
 
 	s = strings.ReplaceAll(s, "Y B", "YB")
-	s = strings.ReplaceAll(s, "AB ", "ABDUL ")
 	s = strings.ReplaceAll(s, "ABD ", "ABDUL ")
 	s = strings.ReplaceAll(s, "ABG ", "ABANG ")
 	s = strings.ReplaceAll(s, " B ", " BIN ")
