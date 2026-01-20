@@ -69,8 +69,8 @@ func UpdateBoardroomChange(db *sqlx.DB, change *models.BoardroomChange) error {
 			person_gender, person_nationality,
 			date_announced, date_of_change,
 			designation, previous_position, remarks,
-			directorate, type_of_change
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+			directorate, type_of_change, related_perm
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 		ON CONFLICT(ann_id) DO UPDATE SET
 			company_name = excluded.company_name,
 			stock_code = excluded.stock_code,
@@ -85,7 +85,8 @@ func UpdateBoardroomChange(db *sqlx.DB, change *models.BoardroomChange) error {
 			previous_position = excluded.previous_position,
 			remarks = excluded.remarks,
 			directorate = excluded.directorate,
-			type_of_change = excluded.type_of_change
+			type_of_change = excluded.type_of_change,
+			related_perm = excluded.related_perm
 	`
 	_, err := db.Exec(db.Rebind(query),
 		change.AnnID, change.CompanyName, change.StockCode,
@@ -93,7 +94,7 @@ func UpdateBoardroomChange(db *sqlx.DB, change *models.BoardroomChange) error {
 		change.PersonGender, change.PersonNationality,
 		change.DateAnnounced, change.DateOfChange,
 		change.Designation, change.PreviousPosition, change.Remarks,
-		change.Directorate, change.TypeOfChange)
+		change.Directorate, change.TypeOfChange, change.RelatedPerm)
 	if err != nil {
 		return fmt.Errorf("failed to insert or update boardroom change: %w", err)
 	}
@@ -103,7 +104,7 @@ func UpdateBoardroomChange(db *sqlx.DB, change *models.BoardroomChange) error {
 func InsertEntity(db *sqlx.DB, e *models.Entity) (int, error) {
 	query := `
 		INSERT INTO entities (
-			display_name, name, salutation, stock_code,
+			display_name, ori_name, name, salutation, stock_code,
 			birth_year, gender, nationality,
 			created_at
 		)
@@ -114,6 +115,7 @@ func InsertEntity(db *sqlx.DB, e *models.Entity) (int, error) {
 	var scID int
 	err := db.QueryRowx(
 		db.Rebind(query),
+		e.DisplayName,
 		e.DisplayName,
 		e.Name,
 		e.Salutation,

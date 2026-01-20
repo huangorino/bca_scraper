@@ -22,5 +22,6 @@ type BoardroomChange struct {
 	Directorate       string     `json:"directorate,omitempty"`
 	TypeOfChange      string     `json:"type_of_change,omitempty"`
 	Background        Background `json:"background,omitempty"`
+	RelatedPerm       int        `json:"related_perm,omitempty"`
 	CreatedAt         time.Time  `json:"created_at,omitempty"`
 }

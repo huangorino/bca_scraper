@@ -88,9 +88,9 @@ func FetchAnnouncementsByCategory(db *sqlx.DB, category string) ([]*models.Annou
 	var args []interface{}
 	if category != "" {
 		if category == "attachments" {
-			sqlQuery += " WHERE attachments != 'null' AND date_posted >= CURRENT_DATE - INTERVAL '7 days'"
+			sqlQuery += " WHERE attachments != 'null' AND date_posted >= CURRENT_DATE - INTERVAL '3 days'"
 		} else {
-			sqlQuery += " WHERE category = $1 AND date_posted >= CURRENT_DATE - INTERVAL '7 days'"
+			sqlQuery += " WHERE category = $1 AND date_posted >= CURRENT_DATE - INTERVAL '3 days'"
 			args = append(args, category)
 		}
 	}
@@ -148,7 +148,7 @@ func FindEntitiesByNameOrDisplay(db *sqlx.DB, name string, displayName string, b
 		SELECT id, primary_perm_id, secondary_perm_id, display_name, name, salutation, 
 		       stock_code, birth_year, gender, nationality, created_at, updated_at
 		FROM entities
-		WHERE (name = $1 OR display_name = $2) AND birth_year = $3
+		WHERE (name = $1 OR display_name = $2 OR ori_name = $2) AND birth_year = $3
 		ORDER BY secondary_perm_id ASC`, name, displayName, birthYear)
 	if err != nil {
 		return nil, fmt.Errorf("query entities: %w", err)
@@ -161,7 +161,7 @@ func UpdatePrimaryPermID(db *sqlx.DB, name string, displayName string, birthYear
 	_, err := db.Exec(`
 		UPDATE entities
 		SET primary_perm_id = $1, updated_at = CURRENT_TIMESTAMP
-		WHERE (name = $2 OR display_name = $3) AND birth_year = $4`, primaryPermID, name, displayName, birthYear)
+		WHERE (name = $2 OR display_name = $3 OR ori_name = $3) AND birth_year = $4`, primaryPermID, name, displayName, birthYear)
 	if err != nil {
 		return fmt.Errorf("update primary_perm_id: %w", err)
 	}

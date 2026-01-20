@@ -62,7 +62,7 @@ func main() {
 			continue
 		}
 
-		err = GetOrCreateEntity(*change)
+		err = GetOrCreateEntity(change)
 		if err != nil {
 			log.Errorf("❌ Entity lookup/creation failed for ann_id %s: %v", annID, err)
 			continue

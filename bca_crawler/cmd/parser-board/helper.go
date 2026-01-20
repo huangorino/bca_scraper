@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-func GetOrCreateEntity(change models.BoardroomChange) error {
+func GetOrCreateEntity(change *models.BoardroomChange) error {
 	title, name := utils.SplitTitle(change.PersonName)
 
 	// Step 1: Check if db contains records with the name/display_name
@@ -67,6 +67,10 @@ func GetOrCreateEntity(change models.BoardroomChange) error {
 	if err = db.UpdateBackground(database, permID, &change.Background); err != nil {
 		return fmt.Errorf("Qualifications update failed: %w", err)
 	}
+
+	change.RelatedPerm = permID
+	change.PersonTitle = title
+	change.PersonName = name
 
 	return nil
 }
