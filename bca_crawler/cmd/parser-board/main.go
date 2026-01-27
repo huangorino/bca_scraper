@@ -14,6 +14,7 @@ import (
 // parser for change in boardroom announcements
 
 var database *sqlx.DB
+var log = utils.Logger
 
 func main() {
 	// -------------------------------------------------------------------------
@@ -26,7 +27,6 @@ func main() {
 
 	// Initialize logger
 	utils.InitLogger()
-	log := utils.Logger
 	log.Infof("🔧 Configuration loaded: %+v", *cfg)
 
 	// -------------------------------------------------------------------------

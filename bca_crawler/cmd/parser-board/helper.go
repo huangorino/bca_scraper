@@ -1,10 +1,11 @@
 package main
 
 import (
+	"fmt"
+
 	"bca_crawler/internal/db"
 	"bca_crawler/internal/models"
 	"bca_crawler/internal/utils"
-	"fmt"
 )
 
 func GetOrCreateEntity(change *models.BoardroomChange) error {
@@ -19,6 +20,8 @@ func GetOrCreateEntity(change *models.BoardroomChange) error {
 	var permID int
 	toInsert := false
 	if len(entities) > 0 {
+		log.Infof("Found entities: %s", *entities[0].Name)
+
 		// Check if the stock code exists in any of the entities
 		stockCodeFound := false
 		for i := range entities {
@@ -61,6 +64,7 @@ func GetOrCreateEntity(change *models.BoardroomChange) error {
 		if err != nil {
 			return fmt.Errorf("InsertEntity failed: %w", err)
 		}
+		log.Infof("Inserted new entity: %s", name)
 	}
 
 	// Update background information

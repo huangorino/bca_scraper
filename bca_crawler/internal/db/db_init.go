@@ -70,6 +70,9 @@ CREATE TABLE IF NOT EXISTS entities (
     birth_year INTEGER,
     gender TEXT,
     nationality TEXT,
+    ori_name TEXT,
+    alias_name TEXT,
+    new_ic TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -92,6 +95,7 @@ CREATE TABLE IF NOT EXISTS boardroom_changes (
     remarks TEXT,
     directorate TEXT,
     type_of_change TEXT,
+    related_perm INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -108,7 +108,7 @@ func InsertEntity(db *sqlx.DB, e *models.Entity) (int, error) {
 			birth_year, gender, nationality,
 			created_at
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 		RETURNING secondary_perm_id
 	`
 
