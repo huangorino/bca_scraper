@@ -96,7 +96,7 @@ func FetchAnnouncementsByCategory(db *sqlx.DB, category string) ([]*models.Annou
 		}
 	}
 
-	sqlQuery += " ORDER BY ann_id ASC"
+	sqlQuery += " ORDER BY ann_id DESC"
 
 	var announcements []models.AnnouncementDB
 	err := db.Select(&announcements, sqlQuery, args...)
