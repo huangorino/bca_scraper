@@ -71,6 +71,29 @@ func ParseAnnouncementHTML(ann *models.Announcement) error {
 	}
 
 	// --------------------------------------------
+	// 3. Parse attachment URLs (if any)
+	// --------------------------------------------
+	var attachments []string
+
+	doc.Find("p.att_download_pdf a").Each(func(_ int, s *goquery.Selection) {
+		href, ok := s.Attr("href")
+		if !ok {
+			return
+		}
+
+		href = strings.TrimSpace(utils.HtmlUnescape(href))
+		if href == "" {
+			return
+		}
+
+		attachments = append(attachments, href)
+	})
+
+	if len(attachments) > 0 {
+		ann.Attachments = attachments
+	}
+
+	// --------------------------------------------
 	// 1. Extract Announcement Info section
 	// --------------------------------------------
 	section, err := extractAnnouncementInfoHTML(ann.Content)
@@ -108,29 +131,6 @@ func ParseAnnouncementHTML(ann *models.Announcement) error {
 			ann.RefNumber = value
 		}
 	})
-
-	// --------------------------------------------
-	// 3. Parse attachment URLs (if any)
-	// --------------------------------------------
-	var attachments []string
-
-	doc.Find("p.att_download_pdf a").Each(func(_ int, s *goquery.Selection) {
-		href, ok := s.Attr("href")
-		if !ok {
-			return
-		}
-
-		href = strings.TrimSpace(utils.HtmlUnescape(href))
-		if href == "" {
-			return
-		}
-
-		attachments = append(attachments, href)
-	})
-
-	if len(attachments) > 0 {
-		ann.Attachments = attachments
-	}
 
 	return nil
 }
@@ -182,11 +182,11 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 
 	// --- Boardroom change core fields ---
 	change := &models.BoardroomChange{
-		AnnID:         ann.AnnID,
+		AnnID:         &ann.AnnID,
 		DateAnnounced: utils.ParseDate(findValueByLabel(doc, "Date Announced")),
 		DateOfChange:  utils.ParseDate(findValueByLabel(doc, "Date of change")),
-		Directorate:   tidy(findValueByLabel(doc, "Directorate")),
-		TypeOfChange:  tidy(findValueByLabel(doc, "Type of change")),
+		Directorate:   utils.PtrString(tidy(findValueByLabel(doc, "Directorate"))),
+		TypeOfChange:  utils.PtrString(tidy(findValueByLabel(doc, "Type of change"))),
 	}
 
 	if change.DateAnnounced == nil {
@@ -203,15 +203,15 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 		stockCode = tidy(findValueByLabel(doc, "Stock Code"))
 	}
 
-	change.CompanyName = strings.ToUpper(companyName)
-	change.StockCode = strings.ToUpper(stockCode)
+	change.CompanyName = utils.PtrString(strings.ToUpper(companyName))
+	change.StockCode = utils.PtrString(strings.ToUpper(stockCode))
 
 	// --- Person fields ---
 	personName := tidy(findValueByLabel(doc, "Name"))
 	// title, name := utils.SplitTitle(personName)
 	ageStr := tidy(findValueByLabel(doc, "Age"))
 	age, _ := strconv.Atoi(ageStr)
-	birthYear := change.DateAnnounced.Year() - age
+	birthYear := utils.TimeValue(change.DateAnnounced).Year() - age
 	gender := tidy(findValueByLabel(doc, "Gender"))
 	genderCode := ""
 	if len(gender) > 0 {
@@ -219,26 +219,26 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 	}
 	nationality := tidy(findValueByLabel(doc, "Nationality"))
 
-	change.PersonName = strings.ToUpper(personName)
-	change.PersonBirthYear = birthYear
-	change.PersonGender = genderCode
-	change.PersonNationality = strings.ToUpper(nationality)
+	change.PersonName = utils.PtrString(strings.ToUpper(personName))
+	change.PersonBirthYear = &birthYear
+	change.PersonGender = utils.PtrString(genderCode)
+	change.PersonNationality = utils.PtrString(strings.ToUpper(nationality))
 
-	change.Designation = tidy(findValueByLabel(doc, "New Position"))
-	change.PreviousPosition = tidy(findValueByLabel(doc, "Previous Position"))
+	change.Designation = utils.PtrString(tidy(findValueByLabel(doc, "New Position")))
+	change.PreviousPosition = utils.PtrString(tidy(findValueByLabel(doc, "Previous Position")))
 
-	if change.Designation == "" {
-		if change.TypeOfChange == "Appointment" {
-			change.Designation = tidy(findValueByLabel(doc, "Designation"))
+	if utils.StringValue(change.Designation) == "" {
+		if utils.StringValue(change.TypeOfChange) == "Appointment" {
+			change.Designation = utils.PtrString(tidy(findValueByLabel(doc, "Designation")))
 		} else {
-			change.PreviousPosition = tidy(findValueByLabel(doc, "Designation"))
+			change.PreviousPosition = utils.PtrString(tidy(findValueByLabel(doc, "Designation")))
 		}
 	}
 
-	change.Remarks = tidy(findValueByLabel(doc, "Remarks :"))
-	if change.Remarks == "" {
+	change.Remarks = utils.PtrString(tidy(findValueByLabel(doc, "Remarks :")))
+	if utils.StringValue(change.Remarks) == "" {
 		// try remarks from InputTable2
-		change.Remarks = tidy(doc.Find("table.InputTable2 td.FootNote").Text())
+		change.Remarks = utils.PtrString(tidy(doc.Find("table.InputTable2 td.FootNote").Text()))
 	}
 
 	background := &models.Background{

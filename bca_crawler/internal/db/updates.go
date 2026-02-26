@@ -104,25 +104,28 @@ func UpdateBoardroomChange(db *sqlx.DB, change *models.BoardroomChange) error {
 func InsertEntity(db *sqlx.DB, e *models.Entity) (int, error) {
 	query := `
 		INSERT INTO entities (
+			primary_perm_id,
 			display_name, ori_name, name, salutation, stock_code,
-			birth_year, gender, nationality,
+			birth_year, gender, nationality, new_ic,
 			created_at
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		RETURNING secondary_perm_id
 	`
 
 	var scID int
 	err := db.QueryRowx(
 		db.Rebind(query),
+		e.PrimaryPermID,
 		e.DisplayName,
-		e.DisplayName,
+		e.OriName,
 		e.Name,
 		e.Salutation,
 		e.StockCode,
 		e.BirthYear,
 		e.Gender,
 		e.Nationality,
+		e.NewIC,
 		e.CreatedAt,
 	).Scan(&scID)
 	if err != nil {

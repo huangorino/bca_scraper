@@ -24,41 +24,6 @@ CREATE TABLE IF NOT EXISTS announcements (
 CREATE INDEX IF NOT EXISTS idx_ann_date_posted ON announcements(date_posted);
 
 
-CREATE TABLE IF NOT EXISTS stocks (
-  id SERIAL PRIMARY KEY,
-  stock_code VARCHAR(50) UNIQUE,
-  stock_name VARCHAR(255),
-  company_name VARCHAR(255),
-  market VARCHAR(100),
-  sector VARCHAR(100),
-  website VARCHAR(255),
-  status VARCHAR(10) DEFAULT 'ACTIVE'
-);
-
-
-CREATE TABLE IF NOT EXISTS daily_stock_prices (
-  id SERIAL PRIMARY KEY,
-  stock_code VARCHAR(50) NOT NULL,
-  date DATE NOT NULL,
-  close_price DECIMAL(10,4),
-  change DECIMAL(10,4),
-  change_perc DECIMAL(5,2),
-  volume BIGINT,
-  recommend varchar(30),
-  high_price DECIMAL(10,4),
-  low_price DECIMAL(10,4),
-  buy_qty BIGINT,
-  sell_qty BIGINT,
-  mkt_cap DECIMAL(20,4),
-  pe DECIMAL(10,4),
-  eps DECIMAL(10,4),
-  esg_rating INTEGER,
-  UNIQUE(stock_code, date)
-);
-CREATE INDEX IF NOT EXISTS idx_daily_stock_prices_stock_code ON daily_stock_prices(stock_code);
-CREATE INDEX IF NOT EXISTS idx_daily_stock_prices_date ON daily_stock_prices(date);
-
-
 CREATE TABLE IF NOT EXISTS entities ( 
     id SERIAL PRIMARY KEY,
     primary_perm_id INTEGER,
@@ -73,6 +38,7 @@ CREATE TABLE IF NOT EXISTS entities (
     ori_name TEXT,
     alias_name TEXT,
     new_ic TEXT,
+    related_perm JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

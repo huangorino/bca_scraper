@@ -47,7 +47,8 @@ func FetchUnparsedAnnouncements(db *sqlx.DB) ([]*models.Announcement, error) {
 	rows, err := db.Query(`
 	SELECT id, ann_id, content 
 	FROM announcements 
-	WHERE ref_number = '' ORDER BY ann_id ASC`)
+	WHERE attachments = 'null' 
+	ORDER BY ann_id ASC LIMIT 10`)
 
 	if err != nil {
 		return nil, fmt.Errorf("query announcements: %w", err)
@@ -166,4 +167,79 @@ func UpdatePrimaryPermID(db *sqlx.DB, name string, displayName string, birthYear
 		return fmt.Errorf("update primary_perm_id: %w", err)
 	}
 	return nil
+}
+
+// FindEntitiesByNameOrDisplay finds all entities matching the given name or display_name
+func FetchExHistEntity(db *sqlx.DB) ([]models.Entity, error) {
+	var entities []models.Entity
+	err := db.Select(&entities, `
+		SELECT
+			h.director_name as name,
+			h.title as salutation,
+			EXTRACT(YEAR FROM h.birth_date) as birth_year,
+			s.stock_name as stock_code,
+			h.gender,
+			h.nationality,
+			h.new_ic
+		FROM ex_hist h
+		LEFT JOIN stocks s ON s.stock_code = h.stock_code
+		`)
+	if err != nil {
+		return nil, fmt.Errorf("query entities: %w", err)
+	}
+	return entities, nil
+}
+
+// FindEntitiesByNameOrDisplay finds all entities matching the given name or display_name
+func FetchExHist(db *sqlx.DB) ([]models.ExHistEntity, error) {
+	var entities []models.ExHistEntity
+	err := db.Select(&entities, `
+		SELECT
+			s.stock_name as stock_code,
+			h.company_name as company_name,
+			h.title as title,
+			h.director_name as director_name,
+			h.pst_app_date as pst_app_date,
+			h.pst_res_date as pst_res_date,
+			h.designation as designation,
+			h.birth_date as birth_date,
+			h.gender,
+			h.nationality,
+			h.new_ic
+		FROM ex_hist h
+		LEFT JOIN stocks s ON s.stock_code = h.stock_code
+		order by director_name
+		`)
+	if err != nil {
+		return nil, fmt.Errorf("query entities: %w", err)
+	}
+	return entities, nil
+}
+
+// FindEntitiesByNameOrDisplay finds all entities matching the given name or display_name
+func FetchEntity(db *sqlx.DB) ([]models.Entity, error) {
+	var entities []models.Entity
+	err := db.Select(&entities, `
+		SELECT
+			*
+		FROM entities
+		`)
+	if err != nil {
+		return nil, fmt.Errorf("query entities: %w", err)
+	}
+	return entities, nil
+}
+
+// FindEntitiesByNameOrDisplay finds all entities matching the given name or display_name
+func FetchBoardChanges(db *sqlx.DB) ([]models.BoardroomChange, error) {
+	var changes []models.BoardroomChange
+	err := db.Select(&changes, `
+		SELECT
+			*
+		FROM boardroom_changes
+		`)
+	if err != nil {
+		return nil, fmt.Errorf("query entities: %w", err)
+	}
+	return changes, nil
 }

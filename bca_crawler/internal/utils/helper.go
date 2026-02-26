@@ -88,3 +88,32 @@ func StripMarkdown(s string) string {
 	}
 	return s
 }
+
+// StringValue returns the value of a string pointer or an empty string if nil.
+func StringValue(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+// TimeValue returns the value of a time.Time pointer or a zero time if nil.
+func TimeValue(t *time.Time) time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return *t
+}
+
+// PtrString returns a pointer to the given string.
+func PtrString(s string) *string {
+	return &s
+}
+
+// IntValue returns the value of an int pointer or 0 if nil.
+func IntValue(i *int) int {
+	if i == nil {
+		return 0
+	}
+	return *i
+}
