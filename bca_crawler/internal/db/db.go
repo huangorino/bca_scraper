@@ -89,14 +89,14 @@ func FetchAnnouncementsByCategory(db *sqlx.DB, category string) ([]*models.Annou
 	var args []interface{}
 	if category != "" {
 		if category == "attachments" {
-			sqlQuery += " WHERE attachments != 'null'"
+			sqlQuery += " WHERE attachments != 'null' AND date_posted >= CURRENT_DATE - INTERVAL '3 days'"
 		} else {
 			sqlQuery += " WHERE category = $1 AND date_posted >= CURRENT_DATE - INTERVAL '3 days'"
 			args = append(args, category)
 		}
 	}
 
-	sqlQuery += " ORDER BY ann_id DESC"
+	sqlQuery += " ORDER BY ann_id ASC"
 
 	var announcements []models.AnnouncementDB
 	err := db.Select(&announcements, sqlQuery, args...)
