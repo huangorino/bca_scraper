@@ -48,7 +48,7 @@ func FetchUnparsedAnnouncements(db *sqlx.DB) ([]*models.Announcement, error) {
 	SELECT id, ann_id, content 
 	FROM announcements 
 	WHERE attachments = 'null' 
-	ORDER BY ann_id ASC LIMIT 10`)
+	ORDER BY ann_id ASC`)
 
 	if err != nil {
 		return nil, fmt.Errorf("query announcements: %w", err)
