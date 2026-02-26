@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/cookiejar"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -72,9 +74,14 @@ func main() {
 				url = attURL
 			}
 
-			destPath := fmt.Sprintf("attachments/%s/", annID)
+			today := ann.DatePosted.Format("20060102")
+			baseDir := filepath.Join("attachments", today, annID)
+			if err := os.MkdirAll(baseDir, 0755); err != nil {
+				log.Fatalf("[Error] Failed to create directory %s: %v", baseDir, err)
+			}
+			log.Infof("📂 Download directory: %s", baseDir)
 
-			if err := utils.DownloadFile(client, cfg, url, destPath); err != nil {
+			if err := utils.DownloadFile(client, cfg, url, baseDir); err != nil {
 				log.Errorf("[Error] Failed to download %s: %v", url, err)
 				continue
 			}
@@ -89,4 +96,26 @@ func main() {
 
 	}
 	log.Infof("Completed. Processed %d records.", updated)
+}
+
+func buildAttachmentPath(base string, annID int, annDate time.Time) string {
+	id := strconv.Itoa(annID)
+
+	// zfill(4)
+	if len(id) < 4 {
+		id = strings.Repeat("0", 4-len(id)) + id
+	}
+
+	shard1 := id[:2]
+	shard2 := id[2:4]
+
+	month := annDate.Format("2006-01")
+
+	return filepath.Join(
+		base,
+		month,
+		shard1,
+		shard2,
+		strconv.Itoa(annID),
+	)
 }

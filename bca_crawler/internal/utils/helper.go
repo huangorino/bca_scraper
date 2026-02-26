@@ -23,7 +23,11 @@ func ParseDate(s string) *time.Time {
 	if s == "" {
 		return nil
 	}
+
+	s = strings.ReplaceAll(s, "Sept", "Sep")
+
 	layouts := []string{
+		"02 January 2006",
 		"02 Jan 2006",
 		"2 Jan 2006",
 		"02/Jan/2006",

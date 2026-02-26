@@ -47,7 +47,7 @@ func FetchUnparsedAnnouncements(db *sqlx.DB) ([]*models.Announcement, error) {
 	rows, err := db.Query(`
 	SELECT id, ann_id, content 
 	FROM announcements 
-	WHERE attachments = 'null' 
+	WHERE ref_number = '' 
 	ORDER BY ann_id ASC`)
 
 	if err != nil {
@@ -89,7 +89,7 @@ func FetchAnnouncementsByCategory(db *sqlx.DB, category string) ([]*models.Annou
 	var args []interface{}
 	if category != "" {
 		if category == "attachments" {
-			sqlQuery += " WHERE attachments != 'null' AND date_posted >= CURRENT_DATE - INTERVAL '3 days'"
+			sqlQuery += " WHERE attachments != 'null'"
 		} else {
 			sqlQuery += " WHERE category = $1 AND date_posted >= CURRENT_DATE - INTERVAL '3 days'"
 			args = append(args, category)
