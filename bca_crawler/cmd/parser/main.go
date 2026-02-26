@@ -51,6 +51,7 @@ func main() {
 	for i := range data {
 		ann := data[i]
 		annID := strconv.Itoa(ann.AnnID)
+		log.Infof("Processing ann_id %s", annID)
 
 		// -------------------------------------------------------------------------
 		// 4️⃣ Parse Announcement HTML
