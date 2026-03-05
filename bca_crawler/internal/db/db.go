@@ -132,7 +132,6 @@ func FetchAnnouncementsByShareholder(db *sqlx.DB) ([]*models.Announcement, error
 		WHERE category LIKE '%Pursuant%'
 		AND category NOT LIKE '%Company%'
 		AND category NOT LIKE '%Treasury%'
-		AND date_posted >= CURRENT_DATE - INTERVAL '3 days'
 		ORDER BY ann_id ASC
 	`
 
