@@ -2,6 +2,7 @@ package utils
 
 import (
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -120,4 +121,79 @@ func IntValue(i *int) int {
 		return 0
 	}
 	return *i
+}
+
+// Int64Value returns the value of an int64 pointer or 0 if nil.
+func Int64Value(i *int64) int64 {
+	if i == nil {
+		return 0
+	}
+	return *i
+}
+
+// PtrInt64 returns a pointer to the given int64.
+func PtrInt64(i int64) *int64 {
+	return &i
+}
+
+func ParseInt(s string) *int {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil
+	}
+
+	s = strings.ReplaceAll(s, ",", "")
+	s = strings.ReplaceAll(s, " ", "")
+
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		return nil
+	}
+
+	return &i
+}
+
+func ParseInt64(s string) *int64 {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil
+	}
+
+	s = strings.ReplaceAll(s, ",", "")
+	s = strings.ReplaceAll(s, " ", "")
+
+	i, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return nil
+	}
+
+	return &i
+}
+
+func ParseFloat(s string) *float64 {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil
+	}
+
+	s = strings.ReplaceAll(s, ",", "")
+	s = strings.ReplaceAll(s, "RM", "")
+	s = strings.ReplaceAll(s, "$", "")
+	s = strings.ReplaceAll(s, " ", "")
+
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return nil
+	}
+
+	return &f
+}
+
+func FirstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
 }

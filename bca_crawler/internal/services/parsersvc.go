@@ -271,25 +271,45 @@ func ParseBoardroomChangeHTML(ann *models.Announcement) (*models.BoardroomChange
 
 func findValueByLabel(doc *goquery.Document, label string) string {
 	var value string
-	doc.Find("table").EachWithBreak(func(i int, s *goquery.Selection) bool {
-		s.Find("tr").EachWithBreak(func(j int, tr *goquery.Selection) bool {
+
+	doc.Find("table").EachWithBreak(func(i int, table *goquery.Selection) bool {
+		table.Find("tr").EachWithBreak(func(j int, tr *goquery.Selection) bool {
 			tds := tr.Find("td")
-			if tds.Length() >= 2 {
-				labelText := utils.CleanString(tds.Eq(0).Text())
-				if strings.EqualFold(labelText, label) {
-					value = utils.CleanString(tds.Eq(1).Text())
-					return false // break row loop
-				}
+			if tds.Length() < 2 {
+				return true
 			}
+
+			labelText := utils.CleanString(tds.First().Text())
+
+			if strings.EqualFold(labelText, label) {
+				tds.EachWithBreak(func(i int, td *goquery.Selection) bool {
+					if i == 0 {
+						return true
+					}
+
+					txt := utils.CleanString(td.Text())
+					if txt != "" {
+						value = txt
+						return false
+					}
+
+					return true
+				})
+
+				return false
+			}
+
 			return true
 		})
+
 		if value != "" {
-			return false // break table loop
+			return false
 		}
+
 		return true
 	})
 
-	if strings.ToLower(value) == "nil" {
+	if strings.EqualFold(value, "nil") {
 		return ""
 	}
 

@@ -77,7 +77,64 @@ CREATE TABLE IF NOT EXISTS backgrounds (
     interest_in_securities TEXT
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_backgrounds_perm_id ON backgrounds(perm_id);
+ 
+CREATE TABLE IF NOT EXISTS stocks (
+    id SERIAL PRIMARY KEY,
+    stock_code VARCHAR(20) NOT NULL UNIQUE,
+    bursa_id INT,
+    bursa_code VARCHAR(50),
+    "name" TEXT,
+    sector TEXT,
+    sub_sector TEXT,
+    "type" TEXT,
+    shariah BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    stock_name TEXT,
+    board TEXT,
+    about TEXT,
+    website TEXT,
+    address TEXT,
+    phone TEXT,
+    fax TEXT,
+    management JSONB,
+    ownership JSONB,
+    top_investors JSONB,
+    insiders JSONB
+);
 
+CREATE TABLE IF NOT EXISTS shareholding_change (
+    id SERIAL PRIMARY KEY,
+    ann_id INTEGER NOT NULL,
+    stock_code VARCHAR(20) NOT NULL,
+    company_name TEXT,
+    person_name TEXT,
+    person_address TEXT,
+    person_nationality TEXT,
+    company_no TEXT,
+    security_description TEXT,
+    registered_holder TEXT,
+    registered_holder_address TEXT,
+    transaction_type TEXT,
+    transaction_desc TEXT,
+    date_of_change DATE,
+    date_interest_acquired DATE,
+    date_of_cessation DATE,
+    securities_changed BIGINT,
+    price_transacted NUMERIC(18,6),
+    nature_of_interest TEXT,
+    nature_of_change TEXT,
+    circumstances TEXT,
+    direct_units BIGINT,
+    direct_percent NUMERIC(10,4),
+    indirect_units BIGINT,
+    indirect_percent NUMERIC(10,4),
+    total_securities BIGINT,
+    date_of_notice DATE,
+    date_notice_received DATE,
+    remarks TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
 `
 
 // DriverType represents supported database drivers

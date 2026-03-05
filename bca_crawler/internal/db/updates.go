@@ -101,6 +101,109 @@ func UpdateBoardroomChange(db *sqlx.DB, change *models.BoardroomChange) error {
 	return nil
 }
 
+func UpdateShareholdingChange(db *sqlx.DB, changes []*models.ShareholdingChange) error {
+	if len(changes) == 0 {
+		return nil
+	}
+
+	annID := changes[0].AnnID
+
+	tx, err := db.Beginx()
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Delete existing rows for this announcement
+	_, err = tx.Exec("DELETE FROM shareholding_change WHERE ann_id = $1", annID)
+	if err != nil {
+		return fmt.Errorf("delete existing records: %w", err)
+	}
+
+	query := `
+	INSERT INTO shareholding_change (
+		ann_id,
+		stock_code,
+		company_name,
+		person_name,
+		person_address,
+		person_nationality,
+		company_no,
+		security_description,
+		registered_holder,
+		registered_holder_address,
+		transaction_type,
+		transaction_desc,
+		date_of_change,
+		date_interest_acquired,
+		date_of_cessation,
+		securities_changed,
+		price_transacted,
+		nature_of_interest,
+		nature_of_change,
+		circumstances,
+		direct_units,
+		direct_percent,
+		indirect_units,
+		indirect_percent,
+		total_securities,
+		date_of_notice,
+		date_notice_received,
+		remarks
+	) VALUES (
+		$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
+		$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
+		$21,$22,$23,$24,$25,$26,$27,$28
+	)
+	`
+
+	stmt, err := tx.Preparex(tx.Rebind(query))
+	if err != nil {
+		return fmt.Errorf("prepare statement: %w", err)
+	}
+	defer stmt.Close()
+
+	for _, change := range changes {
+
+		_, err := stmt.Exec(
+			change.AnnID,
+			change.StockCode,
+			change.CompanyName,
+			change.PersonName,
+			change.PersonAddress,
+			change.PersonNationality,
+			change.CompanyNo,
+			change.SecurityDescription,
+			change.RegisteredHolder,
+			change.RegisteredHolderAddress,
+			change.TransactionType,
+			change.TransactionDesc,
+			change.DateOfChange,
+			change.DateInterestAcquired,
+			change.DateOfCessation,
+			change.SecuritiesChanged,
+			change.PriceTransacted,
+			change.NatureOfInterest,
+			change.NatureOfChange,
+			change.Circumstances,
+			change.DirectUnits,
+			change.DirectPercent,
+			change.IndirectUnits,
+			change.IndirectPercent,
+			change.TotalSecurities,
+			change.DateOfNotice,
+			change.DateNoticeReceived,
+			change.Remarks,
+		)
+
+		if err != nil {
+			return fmt.Errorf("insert record: %w", err)
+		}
+	}
+
+	return tx.Commit()
+}
+
 func InsertEntity(db *sqlx.DB, e *models.Entity) (int, error) {
 	query := `
 		INSERT INTO entities (

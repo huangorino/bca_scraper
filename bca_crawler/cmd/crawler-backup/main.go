@@ -53,7 +53,7 @@ func main() {
 	}
 
 	for _, id := range data {
-		annID := strconv.FormatInt(id, 10)
+		annID := strconv.Itoa(id)
 		url := cfg.DetailDomain + cfg.DetailURL + annID
 		log.Infof("Processing announcement ID: %s", annID)
 

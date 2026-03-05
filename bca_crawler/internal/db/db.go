@@ -12,7 +12,7 @@ import (
 	"bca_crawler/internal/models"
 )
 
-func FetchMissingAnnID(db *sqlx.DB) ([]int64, error) {
+func FetchMissingAnnID(db *sqlx.DB) ([]int, error) {
 	rows, err := db.Query(`
 		SELECT t1.ann_id + 1 AS missing_ann_id
 		FROM announcements t1
@@ -26,10 +26,10 @@ func FetchMissingAnnID(db *sqlx.DB) ([]int64, error) {
 	}
 	defer rows.Close()
 
-	var missing []int64
+	var missing []int
 
 	for rows.Next() {
-		var id int64
+		var id int
 		if err := rows.Scan(&id); err != nil {
 			return nil, fmt.Errorf("scan missing ann_id: %w", err)
 		}
@@ -111,6 +111,45 @@ func FetchAnnouncementsByCategory(db *sqlx.DB, category string) ([]*models.Annou
 	var result []*models.Announcement
 	for i := range announcements {
 		ann, err := ConvertAnnouncementDBToAnnouncement(announcements[i])
+		if err != nil {
+			return nil, fmt.Errorf("convert announcement db to announcement: %w", err)
+		}
+
+		result = append(result, ann)
+	}
+
+	return result, nil
+}
+
+func FetchAnnouncementsByShareholder(db *sqlx.DB) ([]*models.Announcement, error) {
+	query := `
+		SELECT 
+			id,	ann_id,	link,
+			company_name,	stock_name,	date_posted,
+			category,	ref_number,	attachments,
+			content
+		FROM announcements
+		WHERE category LIKE '%Pursuant%'
+		AND category NOT LIKE '%Company%'
+		AND category NOT LIKE '%Treasury%'
+		AND date_posted >= CURRENT_DATE - INTERVAL '3 days'
+		ORDER BY ann_id ASC
+	`
+
+	var announcements []models.AnnouncementDB
+
+	if err := db.Select(&announcements, query); err != nil {
+		return nil, fmt.Errorf("select announcements: %w", err)
+	}
+
+	if len(announcements) == 0 {
+		return []*models.Announcement{}, nil
+	}
+
+	result := make([]*models.Announcement, 0, len(announcements))
+
+	for _, a := range announcements {
+		ann, err := ConvertAnnouncementDBToAnnouncement(a)
 		if err != nil {
 			return nil, fmt.Errorf("convert announcement db to announcement: %w", err)
 		}
@@ -242,4 +281,17 @@ func FetchBoardChanges(db *sqlx.DB) ([]models.BoardroomChange, error) {
 		return nil, fmt.Errorf("query entities: %w", err)
 	}
 	return changes, nil
+}
+
+func FetchStockList(db *sqlx.DB) ([]models.Stock, error) {
+	var stockList []models.Stock
+	err := db.Select(&stockList, `
+		SELECT
+			*
+		FROM stocks
+		`)
+	if err != nil {
+		return nil, fmt.Errorf("query stock list: %w", err)
+	}
+	return stockList, nil
 }

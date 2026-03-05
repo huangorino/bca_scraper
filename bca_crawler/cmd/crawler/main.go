@@ -57,12 +57,12 @@ func main() {
 	if err != nil {
 		log.Infof("[Error] Failed to fetch max ann_id from DB: %v", err)
 	} else {
-		if data >= maxID {
+		if int64(data) >= int64(maxID) {
 			log.Info("Database is already up-to-date. No new announcements to scrape.")
 			return
 		}
 
-		startID = data + 1
+		startID = int(data) + 1
 	}
 
 	log.Infof("Starting from ann_id: %d", startID)
