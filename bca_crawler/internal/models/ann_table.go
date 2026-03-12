@@ -31,6 +31,7 @@ type ShareholdingChange struct {
 	AnnID                   int        `json:"ann_id" db:"ann_id"`
 	StockCode               string     `json:"stock_code" db:"stock_code"`
 	CompanyName             *string    `json:"company_name,omitempty" db:"company_name"`
+	ChangeType              *string    `json:"change_type,omitempty" db:"change_type"`
 	PersonName              *string    `json:"person_name,omitempty" db:"person_name"`
 	PersonAddress           *string    `json:"person_address,omitempty" db:"person_address"`
 	PersonNationality       *string    `json:"person_nationality,omitempty" db:"person_nationality"`
@@ -40,14 +41,15 @@ type ShareholdingChange struct {
 	RegisteredHolderAddress *string    `json:"registered_holder_address,omitempty" db:"registered_holder_address"`
 	TransactionType         *string    `json:"transaction_type,omitempty" db:"transaction_type"`
 	TransactionDesc         *string    `json:"transaction_desc,omitempty" db:"transaction_desc"`
+	Currency                *string    `json:"currency,omitempty" db:"currency"`
 	DateOfChange            *time.Time `json:"date_of_change,omitempty" db:"date_of_change"`
 	DateInterestAcquired    *time.Time `json:"date_interest_acquired,omitempty" db:"date_interest_acquired"`
 	DateOfCessation         *time.Time `json:"date_of_cessation,omitempty" db:"date_of_cessation"`
 	SecuritiesChanged       *int64     `json:"securities_changed,omitempty" db:"securities_changed"`
 	PriceTransacted         *float64   `json:"price_transacted,omitempty" db:"price_transacted"`
 	NatureOfInterest        *string    `json:"nature_of_interest,omitempty" db:"nature_of_interest"`
-	NatureOfChange          *string    `json:"nature_of_change,omitempty" db:"nature_of_change"`
 	Circumstances           *string    `json:"circumstances,omitempty" db:"circumstances"`
+	Consideration           *string    `json:"consideration,omitempty" db:"consideration"`
 	DirectUnits             *int64     `json:"direct_units,omitempty" db:"direct_units"`
 	DirectPercent           *float64   `json:"direct_percent,omitempty" db:"direct_percent"`
 	IndirectUnits           *int64     `json:"indirect_units,omitempty" db:"indirect_units"`

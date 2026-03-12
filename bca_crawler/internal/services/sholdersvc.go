@@ -11,19 +11,12 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-func parseDirectorChange219(
-	doc *goquery.Document,
-	ann *models.Announcement,
-) ([]*models.ShareholdingChange, error) {
-
+func parseDirectorChange219(doc *goquery.Document, ann *models.Announcement) ([]*models.ShareholdingChange, error) {
 	var results []*models.ShareholdingChange
-
-	person := findField(doc, "Name")
 
 	table := doc.Find("table.ven_table")
 
 	table.Find("tr").Each(func(i int, tr *goquery.Selection) {
-
 		cells := tr.Find("td")
 
 		if cells.Length() < 5 {
@@ -35,8 +28,8 @@ func parseDirectorChange219(
 		}
 
 		change := newBaseChange(ann)
+		change.ChangeType = utils.PtrString("Changes in Director's Interest Pursuant")
 
-		change.PersonName = utils.PtrString(person)
 		change.DateOfChange = parseDate(cells.Eq(1).Text())
 		change.SecuritiesChanged = parseInt(cells.Eq(2).Text())
 		change.TransactionType = cleanText(cells.Eq(3).Text())
@@ -46,14 +39,9 @@ func parseDirectorChange219(
 		next2 := next1.Next()
 		next3 := next2.Next()
 
-		change.RegisteredHolder =
-			cleanText(next1.Find("td").Last().Text())
-
-		change.TransactionDesc =
-			cleanText(next2.Find("td").Last().Text())
-
-		change.PriceTransacted =
-			parseDecimal(next3.Find("td").Last().Text())
+		change.RegisteredHolder = cleanText(next1.Find("td").Last().Text())
+		change.TransactionDesc = cleanText(next2.Find("td").Last().Text())
+		change.Consideration = cleanText(next3.Find("td").Last().Text())
 
 		results = append(results, change)
 	})
@@ -63,17 +51,12 @@ func parseDirectorChange219(
 	return results, nil
 }
 
-func parseDirectorChange135(
-	doc *goquery.Document,
-	ann *models.Announcement,
-) ([]*models.ShareholdingChange, error) {
-
+func parseDirectorChange135(doc *goquery.Document, ann *models.Announcement) ([]*models.ShareholdingChange, error) {
 	var results []*models.ShareholdingChange
 
-	person := findField(doc, "Name")
+	table := doc.Find("table.ven_table")
 
-	doc.Find("table.ven_table tr").Each(func(i int, tr *goquery.Selection) {
-
+	table.Find("tr").Each(func(i int, tr *goquery.Selection) {
 		cells := tr.Find("td")
 
 		if cells.Length() < 4 {
@@ -86,8 +69,8 @@ func parseDirectorChange135(
 		}
 
 		change := newBaseChange(ann)
+		change.ChangeType = utils.PtrString("Changes in Director's Interest Pursuant")
 
-		change.PersonName = utils.PtrString(person)
 		change.TransactionType = cleanText(cells.Eq(0).Text())
 		change.DateOfChange = date
 		change.SecuritiesChanged = parseInt(cells.Eq(2).Text())
@@ -101,62 +84,68 @@ func parseDirectorChange135(
 	return results, nil
 }
 
-func parseSubstantialChange(doc *goquery.Document, ann *models.Announcement) ([]*models.ShareholdingChange, error) {
+func parseChangesInSub138(doc *goquery.Document, ann *models.Announcement) ([]*models.ShareholdingChange, error) {
 	var results []*models.ShareholdingChange
-
-	person := findField(doc, "Name")
-	address := findField(doc, "Address")
-	nationality := findField(doc, "Nationality")
-	companyNo := findField(doc, "Company No.")
-	securityDesc := findField(doc, "Descriptions")
 
 	table := doc.Find("table.ven_table")
 
-	rows := table.Find("tr")
-
-	rows.Each(func(i int, tr *goquery.Selection) {
-
+	table.Find("tr").Each(func(i int, tr *goquery.Selection) {
 		cells := tr.Find("td")
 
 		if cells.Length() < 5 {
 			return
 		}
 
-		// Only parse rows with rowspan (start of transaction block)
 		if _, ok := cells.First().Attr("rowspan"); !ok {
 			return
 		}
 
 		change := newBaseChange(ann)
+		change.ChangeType = utils.PtrString("Changes in Substantial Shareholder's Interest Pursuant")
 
-		change.PersonName = utils.PtrString(person)
-		change.PersonAddress = utils.PtrString(address)
-		change.PersonNationality = utils.PtrString(nationality)
-		change.CompanyNo = utils.PtrString(companyNo)
-		change.SecurityDescription = utils.PtrString(securityDesc)
-
-		change.DateOfChange = utils.ParseDate(cells.Eq(1).Text())
-		change.SecuritiesChanged = utils.ParseInt64(cells.Eq(2).Text())
-		change.TransactionType = utils.PtrString(utils.CleanString(cells.Eq(3).Text()))
-		change.NatureOfInterest = utils.PtrString(utils.CleanString(cells.Eq(4).Text()))
-
-		// ---- registered holder rows ----
+		change.DateOfChange = parseDate(cells.Eq(1).Text())
+		change.SecuritiesChanged = parseInt(cells.Eq(2).Text())
+		change.TransactionType = cleanText(cells.Eq(3).Text())
+		change.NatureOfInterest = cleanText(cells.Eq(4).Text())
 
 		next1 := tr.Next()
 		next2 := next1.Next()
-		next3 := next2.Next()
 
-		change.RegisteredHolder = utils.PtrString(utils.CleanString(
-			next1.Find("td").Last().Text(),
-		))
+		change.RegisteredHolder = cleanText(next1.Find("td").Last().Text())
+		change.TransactionDesc = cleanText(next2.Find("td").Last().Text())
 
-		change.RegisteredHolderAddress = utils.PtrString(utils.CleanString(
-			next2.Find("td").Last().Text(),
-		))
+		results = append(results, change)
+	})
 
-		change.TransactionDesc = utils.PtrString(utils.CleanString(
-			next3.Find("td").Last().Text(),
-		))
+	extractTotals(doc, results)
+
+	return results, nil
+}
+
+func parseChangesInSub29B(doc *goquery.Document, ann *models.Announcement) ([]*models.ShareholdingChange, error) {
+	var results []*models.ShareholdingChange
+
+	table := doc.Find("table.ven_table")
+
+	table.Find("tr").Each(func(i int, tr *goquery.Selection) {
+		cells := tr.Find("td")
+
+		if cells.Length() < 4 {
+			return
+		}
+
+		date := parseDate(cells.Eq(1).Text())
+		if date == nil {
+			return
+		}
+
+		change := newBaseChange(ann)
+		change.ChangeType = utils.PtrString("Changes in Substantial Shareholder's Interest Pursuant")
+
+		change.TransactionType = cleanText(cells.Eq(0).Text())
+		change.DateOfChange = date
+		change.SecuritiesChanged = parseInt(cells.Eq(2).Text())
+		change.PriceTransacted = parseDecimal(cells.Eq(3).Text())
 
 		results = append(results, change)
 	})
@@ -168,19 +157,7 @@ func parseSubstantialChange(doc *goquery.Document, ann *models.Announcement) ([]
 
 func parseNoticeInterest(doc *goquery.Document, ann *models.Announcement) ([]*models.ShareholdingChange, error) {
 	change := newBaseChange(ann)
-
-	change.PersonName = utils.PtrString(findField(doc, "Name"))
-	change.PersonAddress = utils.PtrString(findField(doc, "Address"))
-	change.PersonNationality = utils.PtrString(findField(doc, "Nationality"))
-	change.CompanyNo = utils.PtrString(findField(doc, "NRIC"))
-
-	change.DateInterestAcquired = utils.ParseDate(findField(doc, "Date interest acquired"))
-
-	change.SecuritiesChanged = utils.ParseInt64(findField(doc, "No of securities"))
-
-	change.PriceTransacted = utils.ParseFloat(findField(doc, "Price Transacted"))
-
-	change.NatureOfInterest = utils.PtrString(findField(doc, "Nature of interest"))
+	change.ChangeType = utils.PtrString("Notice of Interest of Substantial Shareholders Pursuant")
 
 	extractTotals(doc, []*models.ShareholdingChange{change})
 
@@ -189,18 +166,9 @@ func parseNoticeInterest(doc *goquery.Document, ann *models.Announcement) ([]*mo
 
 func parseNoticeCeasing(doc *goquery.Document, ann *models.Announcement) ([]*models.ShareholdingChange, error) {
 	change := newBaseChange(ann)
+	change.ChangeType = utils.PtrString("Notice of Person Ceasing Substantial Shareholders Pursuant")
 
-	change.PersonName = utils.PtrString(findField(doc, "Name"))
-	change.PersonAddress = utils.PtrString(findField(doc, "Address"))
-	change.PersonNationality = utils.PtrString(findField(doc, "Nationality"))
-
-	change.DateOfCessation = utils.ParseDate(findField(doc, "Date of cessation"))
-
-	change.SecuritiesChanged = utils.ParseInt64(findField(doc, "No of securities disposed"))
-
-	change.PriceTransacted = utils.ParseFloat(findField(doc, "Price Transacted"))
-
-	change.NatureOfInterest = utils.PtrString(findField(doc, "Nature of interest"))
+	extractTotals(doc, []*models.ShareholdingChange{change})
 
 	return []*models.ShareholdingChange{change}, nil
 }
@@ -224,27 +192,74 @@ func findField(doc *goquery.Document, label string) string {
 }
 
 func extractTotals(doc *goquery.Document, changes []*models.ShareholdingChange) {
-	directUnits := utils.ParseInt64(findField(doc, "Direct (units)"))
-	directPct := utils.ParseFloat(findField(doc, "Direct (%)"))
-
-	indirectUnits := utils.ParseInt64(findField(doc, "Indirect/deemed interest (units)"))
-	indirectPct := utils.ParseFloat(findField(doc, "Indirect/deemed interest (%)"))
-
-	total := utils.ParseInt64(findField(doc, "Total no of securities after change"))
-
-	notice := utils.ParseDate(findField(doc, "Date of notice"))
-	received := utils.ParseDate(findField(doc, "Date notice received"))
+	var securitiesLabels = []string{
+		"Securities disposed",
+		"No of securities",
+		"No. of securities",
+		"Number of securities",
+	}
 
 	for _, c := range changes {
+		c.PersonName = utils.PtrString(findField(doc, "Name"))
+		c.PersonAddress = utils.PtrString(findField(doc, "Address"))
+		c.CompanyNo = utils.PtrString(findField(doc, "Company No"))
+		c.PersonNationality = utils.PtrString(findField(doc, "Nationality"))
+		c.SecurityDescription = utils.PtrString(findField(doc, "Descriptions"))
+		c.RegisteredHolder = utils.PtrString(findField(doc, "Name of registered holder"))
+		c.RegisteredHolderAddress = utils.PtrString(findField(doc, "Address of registered holder"))
 
-		c.DirectUnits = directUnits
-		c.DirectPercent = directPct
-		c.IndirectUnits = indirectUnits
-		c.IndirectPercent = indirectPct
-		c.TotalSecurities = total
-		c.DateOfNotice = notice
-		c.DateNoticeReceived = received
+		c.DateInterestAcquired = utils.ParseDate(findField(doc, "Date interest acquired"))
+		c.DateOfCessation = utils.ParseDate(findField(doc, "Date of cessation"))
+		c.Currency = utils.PtrString(findField(doc, "Currency"))
+		c.PriceTransacted = utils.ParseFloat(findField(doc, "Price Transacted"))
+		c.Circumstances = utils.PtrString(findField(doc, "Circumstances"))
+		c.NatureOfInterest = utils.PtrString(findField(doc, "Nature of interest"))
+		c.DateOfNotice = utils.ParseDate(findField(doc, "Date of notice"))
+		c.DateNoticeReceived = utils.ParseDate(findField(doc, "Date notice received"))
+
+		if c.SecuritiesChanged == nil {
+			for _, label := range securitiesLabels {
+				if v := utils.ParseInt64(findField(doc, label)); v != nil {
+					c.SecuritiesChanged = v
+					break
+				}
+			}
+		}
+
+		if c.Consideration == nil {
+			c.Consideration = utils.PtrString(findField(doc, "Consideration"))
+		}
+
+		c.DirectUnits = utils.ParseInt64(findField(doc, "Direct (units)"))
+		c.DirectPercent = utils.ParseFloat(findField(doc, "Direct (%)"))
+		c.IndirectUnits = utils.ParseInt64(findField(doc, "Indirect/deemed interest (units)"))
+		c.IndirectPercent = utils.ParseFloat(findField(doc, "Indirect/deemed interest (%)"))
+		c.TotalSecurities = utils.ParseInt64(findField(doc, "Total no of securities after change"))
+		c.DateOfNotice = utils.ParseDate(findField(doc, "Date of notice"))
+		c.DateNoticeReceived = utils.ParseDate(findField(doc, "Date notice received"))
+
+		c.Remarks = extractRemarks(doc)
 	}
+}
+
+func extractRemarks(doc *goquery.Document) *string {
+	remarks := ""
+
+	// modern layout
+	remarks = strings.TrimSpace(
+		doc.Find("#divRemarks td.FootNote").Text(),
+	)
+
+	if remarks != "" {
+		return cleanText(remarks)
+	}
+
+	// fallback for some announcements using <pre>
+	remarks = strings.TrimSpace(
+		doc.Find("#divRemarks pre").Text(),
+	)
+
+	return cleanText(remarks)
 }
 
 func newBaseChange(ann *models.Announcement) *models.ShareholdingChange {
@@ -261,7 +276,8 @@ const (
 	TypeUnknown AnnouncementType = iota
 	TypeDirector135
 	TypeDirector219
-	TypeSubstantialChange
+	TypeChangesInSub138
+	TypeChangesInSub29B
 	TypeNoticeInterest
 	TypeNoticeCeasing
 )
@@ -272,15 +288,17 @@ func detectAnnouncementType(doc *goquery.Document) AnnouncementType {
 
 	switch {
 
-	case strings.Contains(title, "director") &&
-		strings.Contains(title, "219"):
+	case strings.Contains(title, "director") && strings.Contains(title, "219"):
 		return TypeDirector219
 
-	case strings.Contains(title, "director"):
+	case strings.Contains(title, "director") && strings.Contains(title, "135"):
 		return TypeDirector135
 
-	case strings.Contains(title, "sub. s-hldr"):
-		return TypeSubstantialChange
+	case strings.Contains(title, "changes in sub") && strings.Contains(title, "29b"):
+		return TypeChangesInSub29B
+
+	case strings.Contains(title, "changes in sub") && strings.Contains(title, "138"):
+		return TypeChangesInSub138
 
 	case strings.Contains(title, "notice of interest"):
 		return TypeNoticeInterest
@@ -309,8 +327,11 @@ func ParseShareholdingChange(
 	case TypeDirector219:
 		return parseDirectorChange219(doc, ann)
 
-	case TypeSubstantialChange:
-		return parseSubstantialChange(doc, ann)
+	case TypeChangesInSub138:
+		return parseChangesInSub138(doc, ann)
+
+	case TypeChangesInSub29B:
+		return parseChangesInSub29B(doc, ann)
 
 	case TypeNoticeInterest:
 		return parseNoticeInterest(doc, ann)

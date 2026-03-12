@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS shareholding_change (
     ann_id INTEGER NOT NULL,
     stock_code VARCHAR(20) NOT NULL,
     company_name TEXT,
+    change_type TEXT,
     person_name TEXT,
     person_address TEXT,
     person_nationality TEXT,
@@ -117,14 +118,15 @@ CREATE TABLE IF NOT EXISTS shareholding_change (
     registered_holder_address TEXT,
     transaction_type TEXT,
     transaction_desc TEXT,
+    currency TEXT,
     date_of_change DATE,
     date_interest_acquired DATE,
     date_of_cessation DATE,
     securities_changed BIGINT,
     price_transacted NUMERIC(18,6),
     nature_of_interest TEXT,
-    nature_of_change TEXT,
     circumstances TEXT,
+    consideration TEXT,
     direct_units BIGINT,
     direct_percent NUMERIC(10,4),
     indirect_units BIGINT,
@@ -135,6 +137,7 @@ CREATE TABLE IF NOT EXISTS shareholding_change (
     remarks TEXT,
     created_at TIMESTAMP DEFAULT NOW()
 );
+
 `
 
 // DriverType represents supported database drivers

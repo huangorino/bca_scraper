@@ -125,6 +125,7 @@ func UpdateShareholdingChange(db *sqlx.DB, changes []*models.ShareholdingChange)
 		ann_id,
 		stock_code,
 		company_name,
+		change_type,
 		person_name,
 		person_address,
 		person_nationality,
@@ -134,14 +135,15 @@ func UpdateShareholdingChange(db *sqlx.DB, changes []*models.ShareholdingChange)
 		registered_holder_address,
 		transaction_type,
 		transaction_desc,
+		currency,
 		date_of_change,
 		date_interest_acquired,
 		date_of_cessation,
 		securities_changed,
 		price_transacted,
 		nature_of_interest,
-		nature_of_change,
 		circumstances,
+		consideration,
 		direct_units,
 		direct_percent,
 		indirect_units,
@@ -153,7 +155,7 @@ func UpdateShareholdingChange(db *sqlx.DB, changes []*models.ShareholdingChange)
 	) VALUES (
 		$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
 		$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
-		$21,$22,$23,$24,$25,$26,$27,$28
+		$21,$22,$23,$24,$25,$26,$27,$28,$29,$30
 	)
 	`
 
@@ -169,6 +171,7 @@ func UpdateShareholdingChange(db *sqlx.DB, changes []*models.ShareholdingChange)
 			change.AnnID,
 			change.StockCode,
 			change.CompanyName,
+			change.ChangeType,
 			change.PersonName,
 			change.PersonAddress,
 			change.PersonNationality,
@@ -178,14 +181,15 @@ func UpdateShareholdingChange(db *sqlx.DB, changes []*models.ShareholdingChange)
 			change.RegisteredHolderAddress,
 			change.TransactionType,
 			change.TransactionDesc,
+			change.Currency,
 			change.DateOfChange,
 			change.DateInterestAcquired,
 			change.DateOfCessation,
 			change.SecuritiesChanged,
 			change.PriceTransacted,
 			change.NatureOfInterest,
-			change.NatureOfChange,
 			change.Circumstances,
+			change.Consideration,
 			change.DirectUnits,
 			change.DirectPercent,
 			change.IndirectUnits,
