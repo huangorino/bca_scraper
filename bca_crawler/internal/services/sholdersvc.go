@@ -310,10 +310,7 @@ func detectAnnouncementType(doc *goquery.Document) AnnouncementType {
 	return TypeUnknown
 }
 
-func ParseShareholdingChange(
-	ann *models.Announcement,
-) ([]*models.ShareholdingChange, error) {
-
+func ParseShareholdingChange(ann *models.Announcement) ([]*models.ShareholdingChange, error) {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(ann.Content))
 	if err != nil {
 		return nil, err

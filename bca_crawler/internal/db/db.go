@@ -47,8 +47,7 @@ func FetchUnparsedAnnouncements(db *sqlx.DB) ([]*models.Announcement, error) {
 	rows, err := db.Query(`
 	SELECT id, ann_id, content 
 	FROM announcements 
-	WHERE ref_number = '' 
-	ORDER BY ann_id ASC`)
+	ORDER BY ann_id DESC`)
 
 	if err != nil {
 		return nil, fmt.Errorf("query announcements: %w", err)
@@ -123,15 +122,15 @@ func FetchAnnouncementsByCategory(db *sqlx.DB, category string) ([]*models.Annou
 
 func FetchAnnouncementsByShareholder(db *sqlx.DB) ([]*models.Announcement, error) {
 	query := `
-		SELECT 
-			id,	ann_id,	link,
-			company_name,	stock_name,	date_posted,
-			category,	ref_number,	attachments,
-			content
+		SELECT id, ann_id,
+		link, company_name, stock_name,
+		date_posted, category, ref_number,
+		attachments, content 
 		FROM announcements
 		WHERE category LIKE '%Pursuant%'
 		AND category NOT LIKE '%Company%'
 		AND category NOT LIKE '%Treasury%'
+		AND date_posted >= CURRENT_DATE - INTERVAL '3 days'
 		ORDER BY ann_id ASC
 	`
 
@@ -293,4 +292,17 @@ func FetchStockList(db *sqlx.DB) ([]models.Stock, error) {
 		return nil, fmt.Errorf("query stock list: %w", err)
 	}
 	return stockList, nil
+}
+
+func FetchShareHoldingChanges(db *sqlx.DB) ([]models.ShareholdingChange, error) {
+	var changes []models.ShareholdingChange
+	err := db.Select(&changes, `
+		SELECT
+			*
+		FROM shareholding_change
+		`)
+	if err != nil {
+		return nil, fmt.Errorf("query shareholding changes: %w", err)
+	}
+	return changes, nil
 }

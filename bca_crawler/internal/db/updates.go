@@ -46,10 +46,11 @@ func UpdateAnnouncement(db *sqlx.DB, a *models.Announcement) error {
 
 	_, err = db.Exec(`
 	INSERT INTO announcements (
-		ann_id, company_name, stock_name, date_posted, category, ref_number, attachments, content
-	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		ann_id, title, company_name, stock_name, date_posted, category, ref_number, attachments, content
+	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	ON CONFLICT(ann_id)
 	DO UPDATE SET
+		title = EXCLUDED.title,
 		company_name = EXCLUDED.company_name,
 		stock_name = EXCLUDED.stock_name,
 		date_posted = EXCLUDED.date_posted,
@@ -57,7 +58,7 @@ func UpdateAnnouncement(db *sqlx.DB, a *models.Announcement) error {
 		ref_number = EXCLUDED.ref_number,
 		attachments = EXCLUDED.attachments,
 		content = EXCLUDED.content;`,
-		a.AnnID, a.CompanyName, a.StockName, a.DatePosted, a.Category, a.RefNumber, attachmentsJSON, a.Content)
+		a.AnnID, a.Title, a.CompanyName, a.StockName, a.DatePosted, a.Category, a.RefNumber, attachmentsJSON, a.Content)
 	return err
 }
 

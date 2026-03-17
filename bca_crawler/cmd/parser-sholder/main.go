@@ -72,35 +72,3 @@ func main() {
 		updated++
 	}
 }
-
-// func old() {
-
-// 	data, err := db.FetchStockList(database)
-// 	if err != nil {
-// 		log.Fatalf("❌ Failed to fetch stock list: %v", err)
-// 	}
-
-// 		var entities []models.Entity
-
-// 		if stock.Management != nil {
-// 			var managers []models.Management
-// 			if err := json.Unmarshal(*stock.Management, &managers); err != nil {
-// 				log.Warnf("⚠️ Failed to unmarshal management for %s: %v", stockName, err)
-// 			} else {
-// 				log.Infof("Management for %s:", stockName)
-// 				for _, m := range managers {
-// 					title, name := utils.SplitTitle(utils.StringValue(&m.Name))
-
-// 					entities = append(entities, models.Entity{
-// 						Name:       &name,
-// 						StockCode:  &stock.StockCode,
-// 						OriName:    &m.Name,
-// 						Salutation: &title,
-// 					})
-
-// 					log.Infof("OriName: %s | Name: %s | Salutation: %s | Role: %s | Since: %s | Designation: %s", m.Name, name, title, m.Role, m.Since, m.Designation)
-// 				}
-// 			}
-// 		}
-
-// }

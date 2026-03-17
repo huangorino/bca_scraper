@@ -14,3 +14,4 @@ bca_crawler/cmd/parser-board/logs/
 bca_crawler/cmd/parser-att/attachments/
 bca_crawler/cmd/cleaner-board/logs/
 bca_crawler/cmd/parser-sholder/logs/
+bca_crawler/cmd/parser-director/logs/

@@ -99,7 +99,7 @@ func StringValue(s *string) string {
 	if s == nil {
 		return ""
 	}
-	return *s
+	return strings.ToUpper(*s)
 }
 
 // TimeValue returns the value of a time.Time pointer or a zero time if nil.

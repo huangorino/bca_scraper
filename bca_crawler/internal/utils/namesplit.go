@@ -19,27 +19,42 @@ var atomicTitles = map[string]bool{
 	"YTM":   true,
 	"YM":    true,
 
-	"SENATOR": true,
+	"SENATOR":   true,
+	"PROFESOR":  true,
+	"PROFESSOR": true,
+	"PROF":      true,
+	"EMERITUS":  true,
+	"MADYA":     true,
 
-	"TUN":   true,
-	"DATO":  true,
-	"DATO'": true,
-	"DATUK": true,
-	"DATIN": true,
-	"DATU":  true,
-	"PUAN":  true,
-	"PN":    true,
-	"ENCIK": true,
-	"EN":    true,
-	"CIK":   true,
-	"DR":    true,
-	"IR":    true,
-	"HAJI":  true,
-	"HAJAH": true,
-	"MR":    true,
-	"MISS":  true,
-	"MADAM": true,
-	"TUAN":  true,
+	"TUN":    true,
+	"DATO":   true,
+	"DATO'":  true,
+	"DATUK":  true,
+	"DATIN":  true,
+	"DATU":   true,
+	"PUAN":   true,
+	"PN":     true,
+	"ENCIK":  true,
+	"EN":     true,
+	"CIK":    true,
+	"DR":     true,
+	"IR":     true,
+	"HAJI":   true,
+	"HAJAH":  true,
+	"HJ":     true,
+	"HJH":    true,
+	"MR":     true,
+	"MISS":   true,
+	"MADAM":  true,
+	"TUAN":   true,
+	"SIR":    true,
+	"RAJA":   true,
+	"DIRAJA": true,
+	"TS":     true,
+	"DS":     true,
+	"PS":     true,
+	"SR":     true,
+	"CAPT":   true,
 }
 
 var compoundTitles = map[string]bool{
@@ -52,6 +67,8 @@ var compoundTitles = map[string]bool{
 	"DATUK SERI": true,
 	"DATIN SRI":  true,
 	"DATIN SERI": true,
+	"PUAN SRI":   true,
+	"PUAN SERI":  true,
 	"YANG MULIA": true,
 	"Y A":        true,
 	"Y A BHG":    true,
@@ -100,7 +117,10 @@ func normalize(s string) string {
 
 	s = strings.ReplaceAll(s, "’", "'")
 	s = strings.ReplaceAll(s, "'", "")
-	s = strings.ReplaceAll(s, ".", "")
+	s = strings.ReplaceAll(s, ". ", "")
+	s = strings.ReplaceAll(s, ".", " ")
+	s = strings.ReplaceAll(s, "(", "")
+	s = strings.ReplaceAll(s, ")", "")
 
 	s = strings.ReplaceAll(s, "Y B", "YB")
 	s = strings.ReplaceAll(s, "ABG ", "ABANG ")
