@@ -47,6 +47,7 @@ func FetchUnparsedAnnouncements(db *sqlx.DB) ([]*models.Announcement, error) {
 	rows, err := db.Query(`
 	SELECT id, ann_id, content 
 	FROM announcements 
+	WHERE ann_id < 1000000
 	ORDER BY ann_id DESC`)
 
 	if err != nil {
