@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"bca_crawler/internal/db"
 	"bca_crawler/internal/models"
@@ -52,7 +53,8 @@ func GetOrCreateEntity(change *models.BoardroomChange) error {
 
 	if toInsert {
 		permID, err = db.InsertEntity(database, &models.Entity{
-			DisplayName: change.PersonName,
+			DisplayName: utils.PtrString(strings.TrimSpace(title + " " + name)),
+			OriName:     change.PersonName,
 			Name:        &name,
 			Salutation:  &title,
 			StockCode:   change.StockCode,
