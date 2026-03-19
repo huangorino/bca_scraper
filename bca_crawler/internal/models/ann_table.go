@@ -59,4 +59,5 @@ type ShareholdingChange struct {
 	DateNoticeReceived      *time.Time `json:"date_notice_received,omitempty" db:"date_notice_received"`
 	Remarks                 *string    `json:"remarks,omitempty" db:"remarks"`
 	CreatedAt               time.Time  `json:"created_at,omitempty" db:"created_at"`
+	RelatedPerm             *int       `json:"related_perm,omitempty" db:"related_perm"`
 }

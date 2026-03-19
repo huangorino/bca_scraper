@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"bca_crawler/internal/db"
+	"bca_crawler/internal/models"
+	"bca_crawler/internal/services"
 	"bca_crawler/internal/utils"
 
 	"github.com/jmoiron/sqlx"
@@ -102,6 +105,30 @@ func main() {
 
 		if entityType == "Individual" {
 			title, name := utils.SplitTitle(utils.StringValue(ann.PersonName))
+
+			entity := &models.Entity{
+				DisplayName: utils.PtrString(strings.TrimSpace(title + " " + name)),
+				OriName:     ann.PersonName,
+				Name:        &name,
+				Salutation:  &title,
+				StockCode:   &ann.StockCode,
+				Nationality: ann.PersonNationality,
+				CreatedAt:   time.Now(),
+			}
+
+			permID, err := services.GetOrCreateEntity(log, database, entity, nil)
+			if err != nil {
+				log.Errorf("❌ Entity lookup/creation failed for ann_id %s: %v", annID, err)
+				continue
+			}
+
+			ann.RelatedPerm = permID
+
+			// insert into db
+			if err := db.UpdateShareholdingChange(database, []*models.ShareholdingChange{&ann}); err != nil {
+				log.Warnf("⚠️ DB update failed for ann_id %s: %v", annID, err)
+				continue
+			}
 
 			log.Infof("Processing ann_id %s | Title: %s | Name: %s", annID, title, name)
 		}

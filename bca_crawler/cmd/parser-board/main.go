@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"bca_crawler/internal/db"
+	"bca_crawler/internal/models"
 	"bca_crawler/internal/services"
 	"bca_crawler/internal/utils"
 
@@ -62,11 +64,29 @@ func main() {
 			continue
 		}
 
-		err = GetOrCreateEntity(change)
+		title, name := utils.SplitTitle(utils.StringValue(change.PersonName))
+
+		entity := &models.Entity{
+			DisplayName: utils.PtrString(strings.TrimSpace(title + " " + name)),
+			OriName:     change.PersonName,
+			Name:        &name,
+			Salutation:  &title,
+			StockCode:   change.StockCode,
+			BirthYear:   change.PersonBirthYear,
+			Gender:      change.PersonGender,
+			Nationality: change.PersonNationality,
+			CreatedAt:   *change.DateAnnounced,
+		}
+
+		permID, err := services.GetOrCreateEntity(log, database, entity, &change.Background)
 		if err != nil {
 			log.Errorf("❌ Entity lookup/creation failed for ann_id %s: %v", annID, err)
 			continue
 		}
+
+		change.RelatedPerm = permID
+		change.PersonTitle = &title
+		change.PersonName = &name
 
 		err = db.UpdateBoardroomChange(database, change)
 		if err != nil {
