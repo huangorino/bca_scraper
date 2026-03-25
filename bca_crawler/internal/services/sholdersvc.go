@@ -134,7 +134,17 @@ func parseChangesInSub29B(doc *goquery.Document, ann *models.Announcement) ([]*m
 			return
 		}
 
-		date := parseDate(cells.Eq(1).Text())
+		// Old format (5 cols): TransactionType | Description | Date | Securities | Price
+		// New format (4 cols): TransactionType | Date | Securities | Price
+		// Detect by trying the date column for each format.
+		var desc, dateIdx, securitiesIdx, priceIdx int
+		if cells.Length() >= 5 && parseDate(cells.Eq(2).Text()) != nil {
+			desc, dateIdx, securitiesIdx, priceIdx = 1, 2, 3, 4
+		} else {
+			dateIdx, securitiesIdx, priceIdx = 1, 2, 3
+		}
+
+		date := parseDate(cells.Eq(dateIdx).Text())
 		if date == nil {
 			return
 		}
@@ -143,9 +153,10 @@ func parseChangesInSub29B(doc *goquery.Document, ann *models.Announcement) ([]*m
 		change.ChangeType = utils.PtrString("Changes in Substantial Shareholder's Interest Pursuant")
 
 		change.TransactionType = cleanText(cells.Eq(0).Text())
+		change.TransactionDesc = cleanText(cells.Eq(desc).Text())
 		change.DateOfChange = date
-		change.SecuritiesChanged = parseInt(cells.Eq(2).Text())
-		change.PriceTransacted = parseDecimal(cells.Eq(3).Text())
+		change.SecuritiesChanged = parseInt(cells.Eq(securitiesIdx).Text())
+		change.PriceTransacted = parseDecimal(cells.Eq(priceIdx).Text())
 
 		results = append(results, change)
 	})

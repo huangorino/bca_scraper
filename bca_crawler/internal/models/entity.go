@@ -18,6 +18,7 @@ type Entity struct {
 	Gender          *string   `json:"gender,omitempty" db:"gender"`
 	Nationality     *string   `json:"nationality,omitempty" db:"nationality"`
 	NewIC           *string   `json:"new_ic,omitempty" db:"new_ic"`
+	EntitiesType    *string   `json:"entities_type,omitempty" db:"entities_type"`
 	CreatedAt       time.Time `json:"created_at,omitempty" db:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at,omitempty" db:"updated_at"`
 }

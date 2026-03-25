@@ -123,16 +123,16 @@ func FetchAnnouncementsByCategory(db *sqlx.DB, category string) ([]*models.Annou
 
 func FetchAnnouncementsByShareholder(db *sqlx.DB) ([]*models.Announcement, error) {
 	query := `
-		SELECT id, ann_id,
-		link, company_name, stock_name,
-		date_posted, category, ref_number,
-		attachments, content 
-		FROM announcements
-		WHERE category LIKE '%Pursuant%'
-		AND category NOT LIKE '%Company%'
-		AND category NOT LIKE '%Treasury%'
-		AND date_posted >= CURRENT_DATE - INTERVAL '3 days'
-		ORDER BY ann_id ASC
+		SELECT a.id, a.ann_id, a.link, a.company_name, a.stock_name,
+			a.date_posted, a.category, a.ref_number, a.attachments, a.content
+		FROM announcements a
+		WHERE a.category LIKE '%Pursuant%'
+		AND a.category NOT LIKE '%Company%'
+		AND a.category NOT LIKE '%Treasury%'
+		AND NOT EXISTS (
+			SELECT 1 FROM shareholding_change sc WHERE sc.ann_id = a.ann_id
+		)
+		ORDER BY a.ann_id ASC
 	`
 
 	var announcements []models.AnnouncementDB
