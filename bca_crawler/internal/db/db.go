@@ -285,8 +285,7 @@ func FetchBoardChanges(db *sqlx.DB) ([]models.BoardroomChange, error) {
 func FetchStockList(db *sqlx.DB) ([]models.Stock, error) {
 	var stockList []models.Stock
 	err := db.Select(&stockList, `
-		SELECT
-			*
+		SELECT *
 		FROM stocks
 		`)
 	if err != nil {
@@ -298,9 +297,9 @@ func FetchStockList(db *sqlx.DB) ([]models.Stock, error) {
 func FetchShareHoldingChanges(db *sqlx.DB) ([]models.ShareholdingChange, error) {
 	var changes []models.ShareholdingChange
 	err := db.Select(&changes, `
-		SELECT
-			*
+		SELECT *
 		FROM shareholding_change
+		WHERE related_perm IS NULL
 		`)
 	if err != nil {
 		return nil, fmt.Errorf("query shareholding changes: %w", err)

@@ -38,11 +38,28 @@ CREATE TABLE IF NOT EXISTS entities (
     ori_name TEXT,
     alias_name TEXT,
     new_ic TEXT,
-    related_perm JSON,
+    img_path TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS entities_role (
+	id SERIAL PRIMARY KEY,
+	perm_id INTEGER NOT NULL,
+	company_name TEXT,
+	stock_name TEXT,
+	date_appointed DATE,
+	date_resigned DATE,
+	category TEXT,
+	role_name TEXT NOT NULL,
+	promoted BOOL DEFAULT FALSE,
+	alternative BOOL DEFAULT FALSE,
+	independentcy BOOL DEFAULT FALSE,
+	executive BOOL DEFAULT FALSE,
+	chairmanship BOOL DEFAULT FALSE,
+	date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	date_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE IF NOT EXISTS boardroom_changes (
     id SERIAL PRIMARY KEY,
