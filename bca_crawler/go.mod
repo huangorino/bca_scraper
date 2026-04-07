@@ -3,9 +3,9 @@ module bca_crawler
 go 1.25.3
 
 require (
-	github.com/KEDigitalMY/kedai_models v0.0.0-00010101000000-000000000000
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/jmoiron/sqlx v1.4.0
+	github.com/lib/pq v1.12.3
 	github.com/samber/lo v1.53.0
 )
 
@@ -25,7 +25,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
-	github.com/lib/pq v1.12.3 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
@@ -46,12 +45,10 @@ require (
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/chromedp/cdproto v0.0.0-20250803210736-d308e07a266d
 	github.com/chromedp/chromedp v0.14.2
-	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/joho/godotenv v1.5.1
 	github.com/sirupsen/logrus v1.9.4
 	golang.org/x/net v0.50.0 // indirect
 	google.golang.org/genai v1.34.0
-	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
-	modernc.org/sqlite v1.48.1 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
+	modernc.org/sqlite v1.48.1
 )
-
-replace github.com/KEDigitalMY/kedai_models => ../../kedai_models

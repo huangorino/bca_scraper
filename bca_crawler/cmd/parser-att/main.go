@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/KEDigitalMY/kedai_models/db"
-	"github.com/KEDigitalMY/kedai_models/utils"
+	"bca_crawler/internal/db"
+	"bca_crawler/internal/utils"
 	"fmt"
 	"net/http"
 	"net/http/cookiejar"

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/KEDigitalMY/kedai_models/models"
-	"github.com/KEDigitalMY/kedai_models/utils"
+	"bca_crawler/internal/models"
+	"bca_crawler/internal/utils"
 
 	"github.com/PuerkitoBio/goquery"
 )

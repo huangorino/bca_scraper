@@ -3,9 +3,9 @@ package services
 import (
 	"fmt"
 
-	"github.com/KEDigitalMY/kedai_models/db"
-	"github.com/KEDigitalMY/kedai_models/models"
-	"github.com/KEDigitalMY/kedai_models/utils"
+	"bca_crawler/internal/db"
+	"bca_crawler/internal/models"
+	"bca_crawler/internal/utils"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"

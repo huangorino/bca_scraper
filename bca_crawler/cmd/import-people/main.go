@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/KEDigitalMY/kedai_models/db"
-	"github.com/KEDigitalMY/kedai_models/models"
+	"bca_crawler/internal/db"
+	"bca_crawler/internal/models"
 	"bca_crawler/internal/services"
-	"github.com/KEDigitalMY/kedai_models/utils"
+	"bca_crawler/internal/utils"
 )
 
 func main() {

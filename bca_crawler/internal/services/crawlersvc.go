@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/KEDigitalMY/kedai_models/utils"
+	"bca_crawler/internal/utils"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/chromedp/cdproto/network"
