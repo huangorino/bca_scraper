@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"bca_crawler/internal/db"
-	"bca_crawler/internal/models"
+	"github.com/KEDigitalMY/kedai_models/db"
+	"github.com/KEDigitalMY/kedai_models/models"
 	"bca_crawler/internal/services"
-	"bca_crawler/internal/utils"
+	"github.com/KEDigitalMY/kedai_models/utils"
 )
 
 func main() {

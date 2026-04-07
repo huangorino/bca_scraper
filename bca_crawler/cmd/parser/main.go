@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"bca_crawler/internal/db"
+	"github.com/KEDigitalMY/kedai_models/db"
 	"bca_crawler/internal/services"
-	"bca_crawler/internal/utils"
+	"github.com/KEDigitalMY/kedai_models/utils"
 )
 
 // main parser for bursa annoucements

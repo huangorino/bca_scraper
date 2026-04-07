@@ -3,9 +3,9 @@ package services
 import (
 	"fmt"
 
-	"bca_crawler/internal/db"
-	"bca_crawler/internal/models"
-	"bca_crawler/internal/utils"
+	"github.com/KEDigitalMY/kedai_models/db"
+	"github.com/KEDigitalMY/kedai_models/models"
+	"github.com/KEDigitalMY/kedai_models/utils"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
@@ -13,43 +13,24 @@ import (
 
 func GetOrCreateEntity(log *logrus.Logger, database *sqlx.DB, entity *models.Entity, background *models.Background) (*int, error) {
 	// Step 1: Check if db contains records with the name/display_name
-	entities, err := db.FindEntitiesByNameOrDisplay(database, *entity.Name, *entity.OriName, *entity.BirthYear)
+	entities, err := db.FindEntitiesByNameOrDisplay(database, *entity.Name, *entity.OriName)
 	if err != nil {
 		return nil, fmt.Errorf("FindEntitiesByNameOrDisplay failed: %w", err)
 	}
 
 	var permID int
-	toInsert := false
 	if len(entities) > 0 {
 		log.Infof("Found entities: %s", utils.StringValue(entities[0].Name))
 
-		// Check if the stock code exists in any of the entities
-		stockCodeFound := false
 		for _, perm := range entities {
-			if utils.StringValue(entity.StockCode) == utils.StringValue(perm.StockCode) {
-				stockCodeFound = true
-				break
+			permID = entities[0].SecondaryPermID
+
+			err = db.UpdatePrimaryPermID(database, perm.ID, permID)
+			if err != nil {
+				return nil, fmt.Errorf("UpdatePrimaryPermID failed: %w", err)
 			}
 		}
-
-		// Only insert if the stock code is not found in any entity
-		if !stockCodeFound {
-			toInsert = true
-		}
-
-		// Step 2 & 3 & 4: If records found (1 or more), update all their primary_perm_id
-		// to be the same as the first record's secondary_perm_id
-		permID = entities[0].SecondaryPermID
-
-		err = db.UpdatePrimaryPermID(database, *entity.Name, *entity.OriName, *entity.BirthYear, permID)
-		if err != nil {
-			return nil, fmt.Errorf("UpdatePrimaryPermID failed: %w", err)
-		}
 	} else {
-		toInsert = true
-	}
-
-	if toInsert {
 		permID, err = db.InsertEntity(database, entity)
 		if err != nil {
 			return nil, fmt.Errorf("InsertEntity failed: %w", err)
@@ -65,4 +46,46 @@ func GetOrCreateEntity(log *logrus.Logger, database *sqlx.DB, entity *models.Ent
 	}
 
 	return &permID, nil
+}
+
+func ProcessSingleRoleChange(input models.RoleChangeInput, tracker map[string]*models.EntityRole) []*models.EntityRole {
+	var rolesCreated []*models.EntityRole
+
+	// Helper to create and track a new role record
+	createRole := func(asAppointed bool, roleName string) {
+		role := &models.EntityRole{
+			PermID:      input.PermID,
+			CompanyName: input.CompanyName,
+			StockName:   input.StockCode,
+			RoleName:    roleName,
+			Category:    input.Category,
+		}
+		if asAppointed {
+			role.DateAppointed = input.DateOfChange
+			tracker[input.StockCode] = role
+		} else {
+			role.DateResigned = input.DateOfChange
+		}
+		rolesCreated = append(rolesCreated, role)
+	}
+
+	switch input.TypeOfChange {
+	case "APPOINTMENT", "REDESIGNATION":
+		if active, ok := tracker[input.StockCode]; ok && input.TypeOfChange == "REDESIGNATION" {
+			active.DateResigned = input.DateOfChange
+		}
+		createRole(true, input.Designation)
+
+	case "RESIGNATION", "RETIREMENT", "REMOVED", "DEMISED", "OTHERS", "CESSATION", "CESSATION OF OFFICE", "VACATION OF OFFICE":
+		if active, ok := tracker[input.StockCode]; ok {
+			active.DateResigned = input.DateOfChange
+			delete(tracker, input.StockCode)
+		} else {
+			// Standalone cessation record: use PreviousPosition for role name if available
+			roleName := utils.FirstNonEmpty(input.PreviousPosition, input.Designation)
+			createRole(false, roleName)
+		}
+	}
+
+	return rolesCreated
 }

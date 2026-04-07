@@ -2,7 +2,7 @@ package main
 
 import (
 	"bca_crawler/internal/services"
-	"bca_crawler/internal/utils"
+	"github.com/KEDigitalMY/kedai_models/utils"
 	"net/http"
 	"os"
 	"path/filepath"

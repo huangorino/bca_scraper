@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"bca_crawler/internal/utils"
+	"github.com/KEDigitalMY/kedai_models/utils"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/chromedp/cdproto/network"
@@ -77,6 +77,49 @@ func RunPage(ctx context.Context, targetURL *string) (string, error) {
 	}
 
 	return body, nil
+}
+
+func RunRocSearch(ctx context.Context, targetURL *string, searchTerm string) (string, error) {
+	utils.Logger.Infof("Navigating to %s and searching for '%s'", *targetURL, searchTerm)
+	var body string
+
+	if err := chromedp.Run(ctx,
+		chromedp.Navigate(*targetURL),
+		chromedp.Sleep(time.Duration(500+rand.Intn(1500))*time.Millisecond),
+		chromedp.WaitReady("body", chromedp.ByQuery),
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			_ = network.Enable().Do(ctx)
+			chromedp.EvaluateAsDevTools(`() => { try { Object.defineProperty(navigator, 'webdriver', {get: () => undefined}); } catch(e){} }`, nil).Do(ctx)
+			chromedp.EvaluateAsDevTools(`() => { try { Object.defineProperty(navigator, 'plugins', {get: () => [1,2,3,4]}); Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']}); } catch(e){} }`, nil).Do(ctx)
+			chromedp.EvaluateAsDevTools(`() => { try { window.chrome = window.chrome || {}; window.chrome.webstore = {}; } catch(e){} }`, nil).Do(ctx)
+			return nil
+		}),
+		chromedp.Sleep(1*time.Second),
+		chromedp.WaitVisible(`#searchKey`, chromedp.ByID),
+		chromedp.SendKeys(`#searchKey`, searchTerm),
+		chromedp.Click(`.search_txt`, chromedp.ByQuery),
+		chromedp.Sleep(3*time.Second), // Wait for search results
+		chromedp.OuterHTML("html", &body, chromedp.ByQuery),
+	); err != nil {
+		utils.Logger.Errorf("[Error] chromedp run error: %v", err)
+		return "", err
+	}
+
+	if strings.Contains(strings.ToLower(body), "verify you are human") {
+		utils.Logger.Warn("Cloudflare verification detected.")
+		return "", fmt.Errorf("[Error] cloudflare verification detected")
+	}
+
+	return body, nil
+}
+
+func GetRegNum(body string) string {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
+	if err != nil {
+		return ""
+	}
+	// Extract the registration number from the correct cell
+	return strings.TrimSpace(doc.Find(".mat-column-Reg_Num a").First().Text())
 }
 
 func LoadAndCaptureAction(body *string) chromedp.ActionFunc {
