@@ -26,26 +26,26 @@ type Management struct {
 }
 
 type Company struct {
-	ID                int        `json:"id,omitempty" db:"id"`
-	PrimaryPermID     int32      `json:"primary_perm_id,omitempty" db:"primary_perm_id"`
-	SecondaryPermID   int32      `json:"secondary_perm_id,omitempty" db:"secondary_perm_id"`
-	CompanyName       string     `json:"company_name,omitempty" db:"company_name"`
-	RegNo             string     `json:"reg_no,omitempty" db:"reg_no"`
-	RegNoOld          string     `json:"reg_no_old,omitempty" db:"reg_no_old"`
-	DateIncorporation string     `json:"date_incorporation,omitempty" db:"date_incorporation"`
-	IncorporateUnder  string     `json:"incorporate_under,omitempty" db:"incorporate_under"`
-	StockCode         string     `json:"stock_code,omitempty" db:"stock_code"`
-	About             string     `json:"about,omitempty" db:"about"`
-	Industry          string     `json:"industry,omitempty" db:"industry"`
-	Website           string     `json:"website,omitempty" db:"website"`
-	Address           string     `json:"address,omitempty" db:"address"`
-	Phone             string     `json:"phone,omitempty" db:"phone"`
-	Fax               string     `json:"fax,omitempty" db:"fax"`
-	IrContact         string     `json:"ir_contact,omitempty" db:"ir_contact"`
-	GroupStructure    string     `json:"group_structure,omitempty" db:"group_structure"`
-	IndustryOverview  string     `json:"industry_overview,omitempty" db:"industry_overview"`
-	CreatedAt         *time.Time `json:"created_at,omitempty" db:"created_at"`
-	UpdatedAt         *time.Time `json:"updated_at,omitempty" db:"updated_at"`
+	ID                int       `json:"id,omitempty" db:"id"`
+	PrimaryPermID     int32     `json:"primary_perm_id,omitempty" db:"primary_perm_id"`
+	SecondaryPermID   int32     `json:"secondary_perm_id,omitempty" db:"secondary_perm_id"`
+	CompanyName       string    `json:"company_name,omitempty" db:"company_name"`
+	RegNo             string    `json:"reg_no,omitempty" db:"reg_no"`
+	RegNoOld          string    `json:"reg_no_old,omitempty" db:"reg_no_old"`
+	DateIncorporation string    `json:"date_incorporation,omitempty" db:"date_incorporation"`
+	IncorporateUnder  string    `json:"incorporate_under,omitempty" db:"incorporate_under"`
+	StockCode         string    `json:"stock_code,omitempty" db:"stock_code"`
+	About             string    `json:"about,omitempty" db:"about"`
+	Industry          string    `json:"industry,omitempty" db:"industry"`
+	Website           string    `json:"website,omitempty" db:"website"`
+	Address           string    `json:"address,omitempty" db:"address"`
+	Phone             string    `json:"phone,omitempty" db:"phone"`
+	Fax               string    `json:"fax,omitempty" db:"fax"`
+	IrContact         string    `json:"ir_contact,omitempty" db:"ir_contact"`
+	GroupStructure    string    `json:"group_structure,omitempty" db:"group_structure"`
+	IndustryOverview  string    `json:"industry_overview,omitempty" db:"industry_overview"`
+	CreatedAt         time.Time `json:"created_at,omitempty" db:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at,omitempty" db:"updated_at"`
 }
 
 type Stock struct {

@@ -96,6 +96,7 @@ func UpdateShareHoldingPerm() {
 		return
 	}
 
+	uniqueCompanies := make(map[string]struct{})
 	for i := range data {
 		ann := data[i]
 		annID := strconv.Itoa(ann.AnnID)
@@ -110,37 +111,106 @@ func UpdateShareHoldingPerm() {
 			"LP",
 			"L.P.",
 			"PRIVATED",
+			"PERKESO",
 			"FUND",
 			"TRUST",
 			"TABUNG",
 			"LEMBAGA",
 			"AMANAH",
+			"PERBADANAN",
+			"PEMERBADANAN",
+			"PERTUBUHAN",
+			"ASSET",
 			"GROUP",
 			"KUMPULAN",
+			"KWSP",
+			"ASIA",
 			"CORP",
+			"COMPANY",
+			"COMPANIES",
+			"EKONOMI",
+			"ECONOMY",
 			"FOUNDATION",
+			"FINANCE",
+			"FINANCIAL",
+			"STATE",
+			"SECRETARY",
 			"HOLDING",
+			"PROSPERITY",
 			"ASSOCIATION",
+			"ASSOCIATE",
+			"AUTHORITY",
+			"FEDERAL",
+			"SYSTEM",
+			"DEVELOPMENT",
 			"PLC",
+			"P L C",
+			"PLT",
+			"LLC",
+			"L L C",
 			"UCITS",
 			"BANK",
 			"YAYASAN",
 			"B.V.",
 			"BV",
-			"SE",
-			"AKTIENGESELLSCHAFT",
+			"PT",
+			"ANSTALT",
+			"SCHAFT",
+			"PRIVATSTIFTUNG",
+			"GMBH",
+			"REALTY",
+			"SETTLEMENT",
+			"SECRETARY",
+			"CREDIT",
+			"EQUITY",
+			"EQUITIES",
+			"CAPITAL",
 			"ESTATE",
+			"BOARD",
+			"EMPLOYEE",
+			"NOMINEES",
+			"ASSURANCE",
 			"R.L.",
-			"INVESTMENTS",
+			"INVEST",
+			"INTERNATIONAL",
+			"INTL",
+			"NASIONAL",
 			"ULC",
-			"LLC",
+			"UBS",
 			"INC",
 			"SZA",
+			"AKTIEBOLAG",
+			"ALLIANZ",
+			"JP MORGAN",
+			"JPMORGAN",
+			"NIPPON",
+			"ARICINQ",
+			"ANIMA",
+			"AXA",
+			"BTS",
+			"CYC",
+			"CARLSBERG",
+			"DEUTSCHE",
+			"FINANCIERE",
+			"LAFARGE",
+			"NESTL",
+			"PACIFIC",
+			"OFFSHORE",
+			"SKAGEN",
+			"SOFIMA",
+			"SOFIMO",
+			"SOCIETE",
+			"STATE",
+			"TECH",
+			"TELENOR",
 		}
 
 		for _, layout := range layouts {
 			if strings.Contains(utils.StringValue(ann.PersonName), layout) {
 				entityType = "Company"
+
+				uniqueCompanies[utils.StringValue(ann.PersonName)] = struct{}{}
+
 				break
 			}
 		}
@@ -170,5 +240,10 @@ func UpdateShareHoldingPerm() {
 
 			log.Infof("Processing ann_id %s | Title: %s | Name: %s", annID, title, name)
 		}
+	}
+
+	fmt.Println("Distinct Companies Found:")
+	for c := range uniqueCompanies {
+		fmt.Println("-", c)
 	}
 }

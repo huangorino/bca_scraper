@@ -17,3 +17,4 @@ bca_crawler/cmd/parser-sholder/logs/
 bca_crawler/cmd/parser-director/logs/
 bca_crawler/cmd/crawler-roc/logs/
 bca_crawler/cmd/import-people/logs/
+bca_crawler/cmd/import-people/input/
